@@ -1,14 +1,13 @@
 from linearmodels.panel import PanelOLS
-from linearmodels.panel.data import PanelData
 import pandas as pd
-from linearmodels.panel.results import PanelEffectResults
+from linearmodels.panel.results import PanelEffectsResults
 
 def basic_panel_data(df: pd.DataFrame,
                     dependent_var: list[str],
                     independent_vars: list[str], 
                     effects: list[str] = [],
                     control_vars: list[str] = [],
-                    constant: bool = True) -> PanelEffectResults:
+                    constant: bool = True) -> PanelEffectsResults:
     """
     Basic panel data model
     """

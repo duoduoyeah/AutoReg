@@ -1,11 +1,12 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="auto-reg-tools",
+    name="auto-reg",
     version="0.1.0",
     packages=find_packages(),
     install_requires=[
-        # Add dependencies here
+        "litellm",
+        "linearmodels",
     ],
     author="Shiyuan Li",
     author_email="lizhicuo2020@gmail.com",

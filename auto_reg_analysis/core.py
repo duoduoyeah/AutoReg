@@ -1,6 +1,11 @@
 from linearmodels.panel.results import PanelEffectResults
 
 # Using LM JSON response to set up the regression setting
+user_description: dict = {}
+
+def languagemodel_process():
+    pass
+
 reg_setting: dict = {}
 
 # Run regression
