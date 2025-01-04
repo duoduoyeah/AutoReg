@@ -63,23 +63,22 @@ class LangchainQueries:
 
     Please analyze these variables and set up an appropriate {model_type} structure."""
     
-    CREATE_REGRESSION_TABLE_QUERY = (
-        """
+    BASIC_REGRESSION_TABLE_QUERY = """
     Our topic is: {research_topic}
-    Currently, we are running a regression analysis. 
-    The configuration of the regression analysis is:
+
+    Currently, we are running a regression analysis. The configuration of the regression analysis is:
     {regression_config}
 
     Your task is to create a regression table in latex format for the following regression {number_of_results} results:
     {regression_result}
 
-    The latex table should be in the following template format:
+    You should return the latex table following template format:
     {latex_table_template}
-    You should write the regression results in the table.
+
     If there are even number of regression results, then there should be one regression result without controls and one with controls.
     Always use the odd column to write the regression result without controls.
     """
-    )
+    
 
     ANALYSIS_QUERY = """
     Our topic is: {research_topic}

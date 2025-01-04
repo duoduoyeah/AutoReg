@@ -5,20 +5,33 @@ from langchain_core.output_parsers import JsonOutputParser
 from ..static.langchain_query import LangchainQueries
 from langchain_openai import ChatOpenAI
 import os
+from ..auto_reg_setup.regression_config import RegressionConfig, ResearchConfig
 
 class RegressionResultTable(BaseModel):
     table: str = Field(description="regression result table", default="")
 
 
 def generate_econometric_analysis_table(
-    regression_config: str,
+    research_config: ResearchConfig,
+    regression_config: RegressionConfig,
     regression_results: list[PanelEffectsResults],
     model: ChatOpenAI,
-    table_template: str|None = None
+    table_template: str|None = None,
+    query: str|None = None
 ) -> RegressionResultTable:
     """
     Generate econometric analysis table.
     
+    Information to be given to the language model:
+    - research topic
+    - regression config
+    - regression result
+    - latex table template
+    - number of regression results
+    
+    Infromation returned by the language model:
+    - regression result table as a string in latex format
+
     Returns:
         RegressionResultTable: The regression result table.
 
@@ -31,21 +44,26 @@ def generate_econometric_analysis_table(
     if table_template is None:
         table_template = LangchainQueries.TABLE_EXAMPLE
 
-    
 
-    RESEARCH_TOPIC = os.getenv("RESEARCH_TOPIC")
-    if RESEARCH_TOPIC is None:
-        raise ValueError("RESEARCH_TOPIC is not set")
+    if query is None:
+        query = LangchainQueries.format_query(
+            LangchainQueries.BASIC_REGRESSION_TABLE_QUERY,
+            research_topic=research_config.research_topic,
+            regression_config=str(regression_config),
+            regression_result = str(regression_results),
+            latex_table_template=table_template,
+            number_of_results=len(regression_results)
+        )
+    else:
+        query = LangchainQueries.format_query(
+            query,
+            research_topic=research_config.research_topic,
+            regression_config=str(regression_config),
+            regression_result = str(regression_results),
+            latex_table_template=table_template,
+            number_of_results=len(regression_results)
+        )
 
-    query = LangchainQueries.format_query(
-        LangchainQueries.CREATE_REGRESSION_TABLE_QUERY,
-        research_topic=RESEARCH_TOPIC,
-        regression_config=regression_config,
-        regression_result = str(regression_results),
-        latex_table_template=table_template,
-        number_of_results=len(regression_results)
-    )
-    
     prompt = PromptTemplate(
     template="Answer the user query.\n{format_instructions}\n{query}\n",
     input_variables=["query"],
@@ -57,3 +75,10 @@ def generate_econometric_analysis_table(
     output = chain.invoke({"query": query})
 
     return output
+
+
+def draw_tables(regression_results: dict[str, list[PanelEffectsResults]]) -> dict[str, list[RegressionResultTable]]:
+    """
+    Draw tables for each regression result
+    """
+    pass

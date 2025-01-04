@@ -45,6 +45,7 @@ def generate_variables(
     related_var: Optional[str] = None,
     correlation: Optional[float] = 0.3,
     dummy_var: Optional[bool] = False,
+    group_var: Optional[int] = None,
 ) -> pd.DataFrame:
     """
     Generate a new variable in the DataFrame, optionally correlated with an existing variable
@@ -70,6 +71,15 @@ def generate_variables(
         df[var_name] = entity_dummies[df.index.get_level_values('entity')]
         return df
     
+    if group_var is not None:
+        # Generate group variable based on entity
+        n_groups = len(df.index.get_level_values('entity').unique())
+        # Generate random binary values for each entity
+        group_dummies = np.random.randint(0, group_var, n_groups)
+        # Map entity dummies to each observation by entity index
+        df[var_name] = group_dummies[df.index.get_level_values('entity')]
+        return df
+
     if related_var is not None and correlation is not None:
         # Generate correlated random variable
         if var_name not in df.columns:

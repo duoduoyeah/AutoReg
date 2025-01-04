@@ -35,11 +35,11 @@ R-squared          & 0.XXX        & 0.XXX        & --             & 0.XXX \\
 \begin{tabular}{p{3.6cm}p{3.6cm}p{3.6cm}} % Three columns of equal width totaling ~11cm
 \toprule
 & (1) & (2) \\
-Dependent Variable  & Name(replace_with_actual_variable_name)  & Name(replace_with_actual_variable_name) \\
+Dependent Variable  & Name(replace with actual variable name)  & Name(replace with actual variable name) \\
 \midrule
-Independent Variable(replace_with_actual_variable_name)  & $\beta_1$*** & $\beta_2$*** \\
+Independent Variable(replace with actual variable name)  & $\beta_1$*** & $\beta_2$*** \\
             & ($t_1$) & ($t_2$) \\
-Control Variable(replace_with_actual_variable_name)     &  & $\beta_3$*** \\  % Each control variable should be on a new line
+Control Variable(replace with actual variable name)     &  & $\beta_3$*** \\  % Each control variable should be on a new line
             &  & ($t_3$) \\
 Constant    & $\beta_4$* & $\beta_5$ \\
             & ($t_4$) & ($t_5$) \\
@@ -58,5 +58,62 @@ R-squared          & 0.XXX        & 0.XXX \\
 \end{table}
 
 
+\begin{table}[htbp]
+\caption{Endogenous Test Using Instrumental Variable, Template Table}
+\label{Use the regression name as the label}
+\centering
+\begin{tabular}{p{3.6cm}p{3.6cm}p{3.6cm}} % Three columns of equal width totaling ~11cm
+\toprule
+& (1) & (2) \\
+Dependent Variable  & Stage 1(replace with actual variable name)  & Stage 2(replace with actual variable name)  \\
+\midrule
+Independent Variable(replace with actual variable name)   & $\beta_1$*** & $\beta_2$*** \\
+            & ($t_1$) & ($t_2$) \\
+Control Variable(replace with actual variable name)     &  & $\beta_3$*** \\  % Each control variable should be on a new line
+            &  & ($t_3$) \\
+Constant    & $\beta_4$* & $\beta_5$ \\
+            & ($t_4$) & ($t_5$) \\
 
+Number of id       & X,XXX        & X,XXX \\
+Individual FE      & YES          & YES \\
+Year FE            & YES          & YES \\
+Observations       & XX,XXX       & XX,XXX \\
+R-squared          & 0.XXX        & 0.XXX \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item \textit{Note:} t-statistics are in parentheses; *, **, *** denote significance at the 10\%, 5\%, and 1\% levels, respectively.
+\end{tablenotes}
+\end{table}
+
+
+\begin{table}[htbp]
+\caption{Heterogeneity Test by Different Group}
+\label{Use the regression name as the label}
+\centering
+\begin{tabular}{p{3.6cm}p{3.6cm}p{3.6cm}} % Three columns of equal width totaling ~11cm
+\toprule
+& (1) & (2) \\
+Dependent Variable  & group 1(replace with actual variable name)  & group 2(replace with actual variable name)  \\
+\midrule
+Independent Variable(replace with actual variable name)   & $\beta_1$*** & $\beta_2$*** \\
+            & ($t_1$) & ($t_2$) \\
+Control Variable(replace with actual variable name)     &  & $\beta_3$*** \\  % Each control variable should be on a new line
+            &  & ($t_3$) \\
+Constant    & $\beta_4$* & $\beta_5$ \\
+            & ($t_4$) & ($t_5$) \\
+
+Number of id       & X,XXX        & X,XXX \\
+Individual FE      & YES          & YES \\
+Year FE            & YES          & YES \\
+Observations       & XX,XXX       & XX,XXX \\
+R-squared          & 0.XXX        & 0.XXX \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item \textit{Note:} t-statistics are in parentheses; *, **, *** denote significance at the 10\%, 5\%, and 1\% levels, respectively.
+\end{tablenotes}
+\end{table}
 
