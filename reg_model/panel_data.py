@@ -5,6 +5,14 @@ from ..auto_reg_setup.regression_config import RegressionConfig
 from typing import Optional
 
 def fixed_effects(effects: list[str], df: pd.DataFrame) -> tuple[bool, bool, bool]:
+    """
+    Return the fixed effects for the regression
+
+    Use "entity" to indicate the entity effect, not the variable name
+    Use "time" to indicate the time effect, not the variable name
+    For other effects, directly use the column name
+
+    """
     if "entity" in effects:
         entity_effects = True
     else:
@@ -29,7 +37,8 @@ def panel_regression(df: pd.DataFrame,
                     ) -> list[PanelEffectsResults]:
     """
     Basic panel data model.
-    This function is another abstraction of the PanelOLS.
+
+    When run another regression without controls, the first regression is the one with controls.
     """
     regression_results = []
 
@@ -90,7 +99,7 @@ def two_stage_regression(df: pd.DataFrame, regression_config: RegressionConfig) 
     
     # First stage: regress endogenous variable on instrument and controls
     dep_var = df[endogenous_var]  # endogenous variable is now dependent variable
-    exog_vars = df[[regression_config.instrument_vars] + regression_config.control_vars]
+    exog_vars = df[[regression_config.instrument_var] + regression_config.control_vars]
     
     entity_effects, time_effects, other_effects = fixed_effects(regression_config.effects, df)
     
@@ -125,6 +134,9 @@ def two_stage_regression(df: pd.DataFrame, regression_config: RegressionConfig) 
 def group_regression(df: pd.DataFrame, regression_config: RegressionConfig) -> list[PanelEffectsResults]:
     """
     Group regression.
+
+    The first regression is the one with dummy variable == 0
+    The second regression is the one with dummy variable == 1
     """
     group_var = regression_config.group_var
     
@@ -154,7 +166,7 @@ def group_regression(df: pd.DataFrame, regression_config: RegressionConfig) -> l
 
 
 def run_regressions(df: pd.DataFrame, 
-                    regression_config: dict[str, RegressionConfig]) -> dict[str, list[PanelEffectsResults] | list]:
+                    regression_configs: dict[str, RegressionConfig]) -> list[tuple[str, list[PanelEffectsResults]]]:
     """
     Run regressions based on the regression config
     
@@ -165,16 +177,28 @@ def run_regressions(df: pd.DataFrame,
     if not isinstance(df.index, pd.MultiIndex):
         raise ValueError("DataFrame must be double indexed")
     
-    # the key of regression_results is the type of regression
-    # the value of regression_results is a list of PanelEffectsResults
-    regression_results: dict[str, list[PanelEffectsResults] | list] = {}
+    # This is a list of tuples, first item in the tuple is regression description, second item is the regression result.
+    regression_results: list[tuple[str, list[PanelEffectsResults]]] = []
 
-    for reg_type, reg_config in regression_config.items():
-        if reg_config.instrument_vars is not None:
-            regression_results[reg_type].extend(two_stage_regression(df, reg_config))
+    for reg_type, reg_config in regression_configs.items():        
+        if reg_config.instrument_var is not None:
+            regression_results.append((reg_type, two_stage_regression(df, reg_config)))
         elif reg_config.group_var is not None:
-            regression_results[reg_type].extend(group_regression(df, reg_config))
+            modify_type = f"{reg_type}\n The first regression result list below is the one with dummy variable == 0\n The second regression result is the one with dummy variable == 1"
+            regression_results.append((modify_type, group_regression(df, reg_config)))
         else:
-            regression_results[reg_type].extend(panel_regression(df, reg_config))
+            if reg_config.run_another_regression_without_controls:
+                reg_type = f"{reg_type}\n The first regression result list below is the one with controls\n The second regression result is the one without controls"
+
+            regression_results.append((reg_type, panel_regression(df, reg_config)))
+
+    #  In the tuple, add the regression nums in the first item
+
+    for i, (reg_description, results) in enumerate(regression_results):
+        current_regression_num = len(results)
+        reg_description = f"Index: {i}\n Under Index {i}, the number of regressions is: {current_regression_num}\n{reg_description}\n "
+        regression_results[i] = (reg_description, results)
+
+
 
     return regression_results

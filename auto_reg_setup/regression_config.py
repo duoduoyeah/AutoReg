@@ -14,19 +14,19 @@ regression_models: dict[str, str] = {
 
 class BaseRegressionConfig(BaseModel):
     """Base configuration with common variables across all regressions"""
-    dependent_vars: list[str]
-    dependent_var_description: list[str] 
-    independent_vars: list[str]
-    independent_var_description: list[str]
-    control_vars: list[str] | None = None
-    control_vars_description: list[str] | None = None
+    dependent_vars: list[str] = []
+    dependent_var_description: list[str] = [] 
+    independent_vars: list[str] = []
+    independent_var_description: list[str] = []
+    control_vars: list[str] = []
+    control_vars_description: list[str] = []
     constant: bool = True
 
 
 class RegressionConfig(BaseRegressionConfig):
     """Data class to store regression configurations"""
     regression_type: str = Field(default="basic_regression", description="Type of regression model")
-    effects: list[str] | None = None
+    effects: list[str] = []
 
     # extra settings
     run_another_regression_without_controls: bool = False
@@ -47,14 +47,17 @@ class RegressionConfig(BaseRegressionConfig):
             dependent_var_description=base_config.dependent_var_description,
             independent_vars=base_config.independent_vars,
             independent_var_description=base_config.independent_var_description,
+            control_vars=base_config.control_vars,
+            control_vars_description=base_config.control_vars_description,
+            constant=base_config.constant,
             **kwargs
         )
     
     def __str__(self) -> str:
-        """String representation of RegressionConfig, excluding None values"""
+        """String representation of RegressionConfig, excluding None values and empty lists"""
         attributes = []
         for key, value in self.__dict__.items():
-            if value is not None:
+            if value is not None and value != []:
                 attributes.append(f"{key}: {value}")
         return "\n".join(attributes)
 
@@ -77,62 +80,57 @@ class ResearchConfig(BaseModel):
     research_topic: str = Field(description="research topic", default="")
     
     # core variables
-    dependent_vars: list[str] | None = None
-    dependent_var_description: list[str] | None = None
-    independent_vars: list[str] | None = None
-    independent_var_description: list[str] | None = None
+    dependent_vars: list[str] = []
+    dependent_var_description: list[str] = []
+    independent_vars: list[str] = []
+    independent_var_description: list[str] = []
 
     # control variables
-    control_vars: list[str] | None = None
-    control_vars_description: list[str] | None = None
+    control_vars: list[str] = []
+    control_vars_description: list[str] = []
 
     # instrument variables
-    instrument_vars: list[str] | None = None
-    instrument_vars_description: list[str] | None = None
+    instrument_vars: list[str] = []
+    instrument_vars_description: list[str] = []
 
     # group variables for heterogeneity analysis
-    group_vars: list[str] | None = None
-    group_vars_description: list[str] | None = None
+    group_vars: list[str] = []
+    group_vars_description: list[str] = []
 
     # mediating variables
-    mediating_vars: list[str] | None = None
-    mediating_vars_description: list[str] | None = None
+    mediating_vars: list[str] = []
+    mediating_vars_description: list[str] = []
 
     # supplementary variables for robustness test
-    extra_control_vars: list[str] | None = None
-    extra_control_vars_description: list[str] | None = None
+    extra_control_vars: list[str] = []
+    extra_control_vars_description: list[str] = []
     
-    extra_effects: list[str] | None = None 
-    extra_effects_vars: list[str] | None = None
+    extra_effects: list[str] = []
+    extra_effects_vars: list[str] = []
 
-    replacement_x_vars: list[str] | None = None
-    replacement_x_vars_description: list[str] | None = None
-    replacement_y_vars: list[str] | None = None
-    replacement_y_vars_description: list[str] | None = None
+    replacement_x_vars: list[str] = []
+    replacement_x_vars_description: list[str] = []
+    replacement_y_vars: list[str] = []
+    replacement_y_vars_description: list[str] = []
 
     # basic regression settings
-    effects: list[str] | None = None  
-    effects_vars: list[str] | None = None 
+    effects: list[str] = []
+    effects_vars: list[str] = []
 
     constant: bool = True
-    regression_with_wihout_controls: list[str] = Field(
-        description="if list here, will run another regression without controls",
-        default=["basic_regression"]
-    )
+    run_another_regression_without_controls: bool = True
 
     def _all_vars(self) -> list[str]:
         """Return all variables in the research config"""
         return self.dependent_vars + \
                 self.independent_vars + \
                 self.control_vars + \
-                self.instrument_var + \
+                self.instrument_vars + \
                 self.group_vars + \
-                self.mediating_var + \
+                self.mediating_vars + \
                 self.extra_control_vars + \
                 self.replacement_x_vars + \
-                self.replacement_y_vars + \
-                self.effects_vars + \
-                self.extra_effects_vars
+                self.replacement_y_vars
 
 
     def validate_research_config(self, df: pd.DataFrame) -> None:
@@ -140,15 +138,21 @@ class ResearchConfig(BaseModel):
         # Check variables are defined
         if self.dependent_vars is None or self.independent_vars is None:
             raise ValueError("Dependent and independent variables are required")
-        if self.control_vars is not None:
+        if self.control_vars is None:
             raise ValueError("Control variables are required")
-        if self.effects is not None:
+        if self.effects is None:
             raise ValueError("Fixed effects are required")
         
         #check variables are in the dataframe
         for var in self._all_vars():
             if var not in df.columns:
                 raise ValueError(f"Don't have variable {var} in the dataframe")
+
+        if self.effects_vars:
+            all_effects = (self.effects_vars or []) + (self.extra_effects_vars or [])
+            for effect in all_effects:
+                if effect not in df.index.names and effect not in df.columns:
+                    raise ValueError(f"Don't have variable {effect} in the dataframe")
 
 
     def generate_regression_configs(self) -> dict[str, list[RegressionConfig]]:
@@ -163,7 +167,7 @@ class ResearchConfig(BaseModel):
         """
         # the key of configs is to describe the type of regression.
         # the value of configs is a list of RegressionConfig objects.
-        configs: dict[str, list[RegressionConfig]] = {}
+        configs: dict[str, RegressionConfig] = {}
         # Configuration Base
 
         base_config = BaseRegressionConfig(
@@ -180,16 +184,16 @@ class ResearchConfig(BaseModel):
         basic_regression_config = RegressionConfig.create_with_base(
             base_config,
             regression_type="basic regression",
-            effects=self.effects_vars,
-            run_another_regression_without_controls=self.regression_with_wihout_controls,
+            effects=self.effects,
+            run_another_regression_without_controls=self.run_another_regression_without_controls,
         )
         
-        if self.regression_with_wihout_controls is not None:
+        if self.run_another_regression_without_controls:
             regression_types = f"Two Basic regressions.with and without controls"
         else:
             regression_types = "One Basic regression"
 
-        configs[regression_types].append(basic_regression_config)
+        configs[regression_types] = basic_regression_config
 
         # Robustness test configs
 
@@ -199,43 +203,43 @@ class ResearchConfig(BaseModel):
                 temp_config = RegressionConfig.create_with_base(
                     base_config,
                     regression_type="robustness",
-                    effects=self.effects_vars,
+                    effects=self.effects,
                 )
                 temp_config.independent_vars = [x_var]
                 temp_config.independent_var_description = [self.replacement_x_vars_description[i]]
-                configs[f"robustness test - alternative independent variable: {x_var}"].append(temp_config)
+                configs[f"robustness test - alternative independent variable: {x_var}"] = temp_config
 
         if self.replacement_y_vars is not None:
             for i, y_var in enumerate(self.replacement_y_vars):
                 temp_config = RegressionConfig.create_with_base(
                     base_config,
                     regression_type="robustness",
-                    effects=self.effects_vars,
+                    effects=self.effects,
                 )
                 temp_config.dependent_vars = [y_var]
                 temp_config.dependent_var_description = [self.replacement_y_vars_description[i]]
-                configs[f"robustness test - alternative dependent variable: {y_var}"].append(temp_config)
+                configs[f"robustness test - alternative dependent variable: {y_var}"] = temp_config
 
         # - Alternative fixed effects specifications
-        if self.extra_effects_vars is not None:
+        if self.extra_effects is not None:
             temp_config = RegressionConfig.create_with_base(
                 base_config,
                 regression_type="robustness",
-                effects=self.extra_effects_vars,
+                effects=self.extra_effects,
             )
 
-            configs[f"robustness test - alternative fixed effects: {self.extra_effects_vars}"].append(temp_config)
+            configs[f"robustness test - alternative fixed effects: {self.extra_effects_vars}"] = temp_config
 
         # robustness test by adding extra control variables
         if self.extra_control_vars is not None:
             temp_config = RegressionConfig.create_with_base(
                 base_config,
                 regression_type="robustness",
-                effects=self.effects_vars,
+                effects=self.effects,
             )
             temp_config.control_vars.extend(self.extra_control_vars)
             temp_config.control_vars_description.extend(self.extra_control_vars_description)
-            configs[f"robustness test - adding extra control variables: {self.extra_control_vars}"].append(temp_config)
+            configs[f"robustness test - adding extra control variables: {self.extra_control_vars}"] = temp_config
 
 
         # Endogeneity test config 
@@ -245,11 +249,11 @@ class ResearchConfig(BaseModel):
                 temp_config = RegressionConfig.create_with_base(
                     base_config,
                     regression_type="endogeneity",
-                    effects=self.effects_vars,
+                    effects=self.effects,
                     instrument_var=instrument_var,
                     instrument_var_description=self.instrument_vars_description[i],
                 )
-                configs[f"2SLS endogeneity test - instrument variables: {instrument_var}"].append(temp_config)
+                configs[f"2SLS endogeneity test - instrument variables: {instrument_var}"] = temp_config
 
         # Mediating effect config
         if self.mediating_vars is not None:
@@ -257,14 +261,12 @@ class ResearchConfig(BaseModel):
                 temp_config = RegressionConfig.create_with_base(
                     base_config,
                     regression_type="mediating_effect",
-                    effects=self.effects_vars,
+                    effects=self.effects,
                 )
                 temp_config.dependent_vars = [mediating_var]
                 temp_config.dependent_var_description = [self.mediating_vars_description[i]]
 
-                configs[f"mediating effect test by \
-                        test the correlation between \
-                        independent variables and mediating variables: {mediating_var}"].append(temp_config)
+                configs[f"mediating effect test by test the correlation between independent variables and mediating variables: {mediating_var}"] = temp_config
 
 
         # Moderating effect config
@@ -279,21 +281,22 @@ class ResearchConfig(BaseModel):
                 temp_config = RegressionConfig.create_with_base(
                     base_config,
                     regression_type="heterogeneity",
-                    effects=self.effects_vars,
+                    effects=self.effects,
                     group_var=group_var,
                     group_var_description=self.group_vars_description[i],
                 )
-                configs[f"heterogeneity test by group variable: {group_var}"].append(temp_config)
+                configs[f"heterogeneity test by group variable: {group_var}"] = temp_config
 
         return configs
 
     def __str__(self) -> str:
-        """String representation of RegressionConfig, excluding None values"""
+        """String representation of RegressionConfig, excluding None values and empty lists"""
         attributes = []
         for key, value in self.__dict__.items():
-            if value is not None:
+            if value is not None and value != []:
                 attributes.append(f"{key}: {value}")
         return "\n".join(attributes)
+
 
 if __name__ == '__main__':
     research_config = ResearchConfig(

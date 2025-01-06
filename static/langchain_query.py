@@ -5,7 +5,29 @@ class DefaultDict(dict):
 
 class LangchainQueries:
     """Class for storing prompts used with langchain."""
+    REGRESSION_TABLE_DESIGNER = """
+    My research topic is: {research_topic}
     
+    The following is the regression result, I devide them by index.
+    Under each index, the number of regressions may not be one.
+    The regressions:
+    {regression_result}
+
+    Your task is to tell me how many regression result tables should be created. The requirement is that:
+    1. Include all index. The index number you use is from 0 to {number_of_results}.
+    2. For each table, the number of regressions should be two.(Not index amounts, but the number of regressions)
+    3. If there is only one regression available, then the number of regressions should be one.
+    4. For each table, the regressions must be the same type(the same test or analysis type). For example, you could combine two robust regression indices into one table if they are both contain one regression result.
+    
+    You should return:
+    1. the number of regression tables I need create.
+    2. the index used by each regression table using a list of list of integers. The list is as long as the number of regression tables.
+    For each sublist, it contains the index of the regression results that should be combined into one table.
+    3. Table title for each regression table.
+
+    """
+
+
     RESEARCH_TOPIC_PROMPT = """
     I will conduct financial research and perform panel data regression to validate my findings.
     Your task is to propose an engaging financial-related research topic focused on: {research_topic}

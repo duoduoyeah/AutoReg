@@ -113,7 +113,7 @@ def generate_variables(
     return df
 
 
-if __name__ == '__main__':
+def generate_new_csv(n_entities: int = 100, n_periods: int = 10):
     os.environ["RESEARCH_TOPIC"] = "The Impact of Extreme Temperatures on Stock Returns"
     df = generate_data_basic_structure(n_entities=100)
     # independent variable
@@ -139,4 +139,21 @@ if __name__ == '__main__':
 
     print(df.loc[df.index.get_level_values('entity') < 10])
     # Write dataframe to CSV file
+    df.to_csv('temp/simulated_data.csv')
+
+if __name__ == '__main__':
+    import pandas as pd
+
+    # Read the generated CSV file
+    df = pd.read_csv('temp/simulated_data.csv')
+    df = df.set_index(['company_id', 'year'])
+
+    # Display the first few rows of the dataframe
+    print(df.head())
+
+    df = generate_variables(var_name='invester_mood',
+                        related_var='extreme_temperature',
+                        correlation=0.9,
+                        df=df)
+    print(df[['invester_mood']].head())
     df.to_csv('temp/simulated_data.csv')
