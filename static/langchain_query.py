@@ -1,3 +1,5 @@
+import os
+
 class DefaultDict(dict):
     def __missing__(self, key):
         return ""
@@ -23,8 +25,8 @@ class LangchainQueries:
     1. the number of regression tables I need create.
     2. the index used by each regression table using a list of list of integers. The list is as long as the number of regression tables.
     For each sublist, it contains the index of the regression results that should be combined into one table.
-    3. Table title for each regression table.
-
+    3. The number of regression for each table.
+    4. Table title for each regression table.
     """
 
 
@@ -84,23 +86,41 @@ class LangchainQueries:
     {previous_result_configuration}
 
     Please analyze these variables and set up an appropriate {model_type} structure."""
+
+
     
-    BASIC_REGRESSION_TABLE_QUERY = """
-    Our topic is: {research_topic}
-
-    Currently, we are running a regression analysis. The configuration of the regression analysis is:
+    REGRESSION_TABLE_QUERY = """
+    Your task is to create one single regression table in latex format for the following regression {number_of_results} results.
+    
+    The title of the table should describe the regression purpose.
+===============================================
+For your reference: 
+    The regression settings are:
     {regression_config}
-
-    Your task is to create a regression table in latex format for the following regression {number_of_results} results:
+    The regression's description is:
+    {regression_description}
+    The regression's results are in below:
     {regression_result}
-
+===============================================
     You should return the latex table following template format:
     {latex_table_template}
-
-    If there are even number of regression results, then there should be one regression result without controls and one with controls.
-    Always use the odd column to write the regression result without controls.
+===============================================
+    The requirements are:
+    1. Replace all variable names in the first column of the table with actual variable names.
+    2. Replace all placeholder with actual parameter values.
+    3. Don't use underline in latex, use space instead.
+    4. One column, one regression result.
     """
     
+    COMBINE_REGRESSION_TABLE_QUERY = """
+    Your task is to create one single regression table in latex format by combining the following regression tables. Also return the independent variables of each column of the new table.
+    The title of the new table is: {table_title}.
+
+    The tables you should combine are:
+    {regression_tables}
+    
+    
+    """
 
     ANALYSIS_QUERY = """
     Our topic is: {research_topic}
@@ -126,47 +146,25 @@ class LangchainQueries:
     The configuration of the regression analysis is:
     {regression_config}
     Your task is to write the regression equation in the latex format.
-
     """
 
-    # r string is a raw string literal in Python that treats backslashes as literal characters
-    TABLE_EXAMPLE = r"""
-            \begin{table}[htbp]
-            \caption{Regression Results Template Table}
-            \label{Use the regression name as the label}
-            \centering
-            \begin{tabular}{p{3.6cm}p{3.6cm}p{3.6cm}} % Three columns of equal width totaling ~11cm
-            \toprule
-            & (1) & (2) \\
-            Dependent Variable  & Name(replace_with_actual_variable_name)  & Name(replace_with_actual_variable_name) \\
-            \midrule
-            Independent Variable(replace_with_actual_variable_name)  & $\beta_1$*** & $\beta_2$*** \\
-                        & ($t_1$) & ($t_2$) \\
-            Control Variable(replace_with_actual_variable_name)     &  & $\beta_3$*** \\  % Each control variable should be on a new line
-                        &  & ($t_3$) \\
-            Constant    & $\beta_4$* & $\beta_5$ \\
-                        & ($t_4$) & ($t_5$) \\
+    current_folder = os.path.dirname(os.path.abspath(__file__))
+    latex_folder = os.path.join(current_folder, 'latex')
+    with open(os.path.join(latex_folder, 'basic.tex'), 'r') as file:
+        BASIC_TABLE = file.read()
 
-            Number of id       & X,XXX        & X,XXX \\
-            Individual FE      & YES          & YES \\
-            Year FE            & YES          & YES \\
-            Observations       & XX,XXX       & XX,XXX \\
-            R-squared          & 0.XXX        & 0.XXX \\
-            \bottomrule
-            \end{tabular}
-            \begin{tablenotes}
-            \small
-            \item \textit{Note:} t-statistics are in parentheses; *, **, *** denote significance at the 10\%, 5\%, and 1\% levels, respectively.
-            \end{tablenotes}
-            \end{table}
-            """
-
-    TABLE_TEMPLATE_FOUR_COLUMNS = r"""
-
-    """
+    with open(os.path.join(latex_folder, 'iv.tex'), 'r') as file:
+        IV_TABLE = file.read()
+    
+    with open(os.path.join(latex_folder, 'group.tex'), 'r') as file:
+        GROUP_TABLE = file.read()
 
 
     @staticmethod
     def format_query(query: str, **kwargs) -> str:
         return query.format_map(DefaultDict(kwargs))
 
+if __name__ == "__main__":
+    print(LangchainQueries.BASIC_TABLE, end="\n\n\n\n\n\n")
+    print(LangchainQueries.IV_TABLE, end="\n\n\n\n\n\n")
+    print(LangchainQueries.GROUP_TABLE, end="\n\n\n\n\n\n")

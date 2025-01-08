@@ -1,0 +1,30 @@
+\begin{table}[htbp]
+    \caption{Heterogeneity Test by Different Group}
+    \label{Use the regression name as the label}
+    \centering
+    \begin{tabular}{p{3.6cm}p{3.6cm}p{3.6cm}} % The sum of the width of the columns should be no more than 12cm
+    \toprule
+    & (1) & (2) \\
+    Group & (replace with actual group name)  & (replace with actual group name)  \\
+    Dependent Variable & variable name & variable name \\
+    \midrule
+    Independent Variable(replace with actual variable name)   & $\beta_1$*** & $\beta_2$*** \\
+                & ($t_1$) & ($t_2$) \\
+    Control Variable(replace with actual variable name)     &  & $\beta_3$*** \\  % Each control variable should be on a new line
+                &  & ($t_3$) \\
+    Constant    & $\beta_4$* & $\beta_5$ \\
+                & ($t_4$) & ($t_5$) \\
+    
+    Number of id       & X,XXX        & X,XXX \\
+    Individual FE      & YES          & YES \\ %When the effect contains entity effect, the individual FE should be YES
+    Year FE            & YES          & YES \\ %When the effect contains time effect, the year FE should be YES
+    Other FE           & YES          & YES \\ %Only when the effect is not entity effect or time effect, the other FE should be Yes.  Otherwise delete this line.
+    Observations       & XX,XXX       & XX,XXX \\
+    R-squared          & 0.XXX        & 0.XXX \\
+    \bottomrule
+    \end{tabular}
+    \begin{tablenotes}
+    \small
+    \item \textit{Note:} t-statistics are in parentheses; *, **, *** denote significance at the 10\%, 5\%, and 1\% levels, respectively.
+    \end{tablenotes}
+    \end{table}

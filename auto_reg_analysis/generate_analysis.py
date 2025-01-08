@@ -4,7 +4,7 @@ import os
 from ..static.langchain_query import LangchainQueries
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
-from .generate_table import draw_tables, RegressionResultTable
+from .generate_table import draw_tables_old, RegressionResultTable
 class RegressionAnalysis(BaseModel):
     analysis: str = Field(description="regression result analysis", default="")
 

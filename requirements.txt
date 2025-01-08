@@ -1,2 +1,5 @@
-litellm
 linearmodels
+langchain
+langchain-openai
+langsmith 
+openai
