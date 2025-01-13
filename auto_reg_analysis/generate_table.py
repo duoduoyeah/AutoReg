@@ -1,5 +1,4 @@
 # Standard imports
-from pydantic import BaseModel, Field
 import asyncio
 
 # Langchain imports
@@ -14,37 +13,7 @@ from linearmodels.panel.results import PanelEffectsResults
 from ..auto_reg_setup.regression_config import RegressionConfig, ResearchConfig
 from ..reg_model.panel_data import *
 from ..static.langchain_query import LangchainQueries
-
-
-
-class RegressionResultTable(BaseModel):
-    latex_table: str = Field(description="regression result table", default="")
-
-
-class ResultTables(BaseModel):
-    tables: list[RegressionResultTable|None] # the regression result tables
-    index: dict[int, int] | None # the key is the index of original regression results, the value is the index of the regression result tables
-    description: list[str]  # the description of the regression results that are used to create the tables
-
-    def get_tables(self, index: list[int]) -> list[RegressionResultTable]:
-        if self.index is None:
-            return self.tables
-        else:
-            return [self.tables[self.index[i]] for i in index]
-
-    def get_description(self, index: list[int]) -> list[str]:
-        if self.index is None:
-            return self.description
-        else:
-            return [self.description[self.index[i]] for i in index]
-    
-
-class TableDesign(BaseModel):
-    number_of_tables: int = Field(description="the number of regression tables I need create")
-    table_index: list[list[int]] = Field(description="the index used by each regression table using a list of list of integers. The list is as long as the number of regression tables. For each sublist, it contains the index of the regression results that should be combined into one table.")
-    table_regression_nums: list[int] = Field(description="the number of regression for each table using a list of integers. The list is as long as the number of regression tables.")
-    table_title: list[str] = Field(description="the title of each regression table using a list of strings, as well as how many columns(the regression numbers). The list is as long as the number of regression tables.")
-
+from .models import RegressionEquation, RegressionAnalysis, RegressionResultTable, ResultTables, TableDesign
 
 async def draw_table(
         regression_description: str,
@@ -88,7 +57,7 @@ async def draw_table(
         except Exception as e:
             print(f"Error drawing table on attempt {attempt + 1}: {e}\n the tables is {regression_description}")
 
-    return None
+    return RegressionResultTable(latex_table='')
 
 
 
@@ -105,52 +74,50 @@ def get_table_template(regression_type: str) -> str:
     else:
         raise ValueError(f"Invalid regression type: {regression_type}")
 
+async def generate_empty_tables():
+    return RegressionResultTable(latex_table='')
+
 async def draw_tables(
         all_reg_results: list[RegressionResult],
         design: TableDesign,
         model: ChatOpenAI,
-) -> ResultTables:
+        result_tables: ResultTables
+) -> None:
     """
     Draw tables for each regression result.
     """
     table_tasks = []
     table_descriptions = []
     used_regression_result: list[int] = get_used_regression_result(design)
-    index_dict: dict[int, int] = {}
-    count = 0
-    for i in used_regression_result:
-        index_dict[i] = count
-        count += 1
-        regression_description: str = all_reg_results[i].description
-        regression_results: list[PanelEffectsResults] = all_reg_results[i].results
-        regression_config: RegressionConfig = all_reg_results[i].regression_config
-        table_template = get_table_template(all_reg_results[i].regression_type)
-        query = LangchainQueries.REGRESSION_TABLE_QUERY
 
-        table_tasks.append(
-            draw_table(
-                regression_description=regression_description,
-                regression_results=regression_results,
-                regression_config=regression_config,
-                model=model,
-                table_template=table_template,
-                query=query
+    for i in range(len(all_reg_results)):
+        if i not in used_regression_result:
+            table_tasks.append(generate_empty_tables())
+            table_descriptions.append(all_reg_results[i].description)
+        else:
+            regression_description: str = all_reg_results[i].description
+            regression_results: list[PanelEffectsResults] = all_reg_results[i].results
+            regression_config: RegressionConfig = all_reg_results[i].regression_config
+            table_template = get_table_template(all_reg_results[i].regression_type)
+            query = LangchainQueries.REGRESSION_TABLE_QUERY
+
+            table_tasks.append(
+                draw_table(
+                    regression_description=regression_description,
+                    regression_results=regression_results,
+                    regression_config=regression_config,
+                    model=model,
+                    table_template=table_template,
+                    query=query
+                )
             )
-        )
-        table_descriptions.append(regression_description)
-        # TODO: delete this print
-        print(f"Table {count} is {regression_description}")
+            table_descriptions.append(regression_description)
 
     results: list[RegressionResultTable] = await asyncio.gather(*table_tasks)
-    
-    assert count == len(used_regression_result)
+    assert len(results) == len(table_descriptions)
 
-    table_results = ResultTables(
-        tables=results,
-        index=index_dict,
-        description=table_descriptions
-    )
-    return table_results
+    result_tables.tables = results
+    result_tables.description = table_descriptions
 
 
 async def combine_table(
@@ -193,7 +160,7 @@ async def combine_table(
         except Exception as e:
             print(f"Error drawing table on attempt {attempt + 1}: {e}\n the tables is {table_title}")
 
-    return None
+    return RegressionResultTable(latex_table='')
 
 
 async def combine_tables(
@@ -205,6 +172,7 @@ async def combine_tables(
     Combine tables together.
     """
     combine_tasks = []
+    analysis: list[RegressionAnalysis] = []
     for i in range(design.number_of_tables):
         combine_tasks.append(
             combine_table(
@@ -212,15 +180,20 @@ async def combine_tables(
             combine_tables=tables.get_tables(design.table_index[i]),
             model=model,
             query=LangchainQueries.COMBINE_REGRESSION_TABLE_QUERY
+            )
         )
-    )
-
+        analysis.append(tables.get_analysis(design.table_index[i]))
 
     combined_tables: list[RegressionResultTable] = await asyncio.gather(*combine_tasks)
+
+    assert len(combined_tables) == len(analysis)
+    assert len(combined_tables) == design.number_of_tables
+
     result_tables = ResultTables(
         tables=combined_tables,
         index=None,
-        description=design.table_title
+        description=design.table_title,
+        analysis=analysis
     )
     return result_tables
 
@@ -359,3 +332,87 @@ def select_table_design(
 
     return selected_table_design
 
+
+async def analyze_regression_result(
+        regression_config: RegressionConfig,
+        regression_description: str,
+        regression_table: str,
+        model: ChatOpenAI,
+        language_used: str = "Chinese",
+) -> RegressionAnalysis:
+    """
+    Analyze regression results.
+    
+    Information to be given to the language model:
+    - research topic
+    - previous analysis as reference
+    - regression result table
+    - language used
+
+    Information returned by the language model:
+    - regression result analysis as a string in latex format
+
+    Returns:
+        RegressionAnalysis: The regression result analysis.
+    """
+    try:
+        parser = JsonOutputParser(pydantic_object=RegressionAnalysis)
+
+        query = LangchainQueries.format_query(
+            LangchainQueries.ANALYSIS_QUERY,
+            regression_config=regression_config,
+            regression_description=regression_description,
+            regression_table=regression_table,
+            language_used=language_used
+        )
+
+        prompt = PromptTemplate(
+        template="Answer the user query.\n{format_instructions}\n{query}\n",
+        input_variables=["query"],
+        partial_variables={"format_instructions": parser.get_format_instructions()},
+        )
+
+        chain = prompt | model | parser
+
+        output = await chain.ainvoke({"query": query})
+
+        output = RegressionAnalysis.model_validate(output)
+
+        return output
+    except Exception as e:
+        print(f"Error analyzing regression result: {e}\n The table is {regression_description}")
+        
+        return RegressionAnalysis(analysis='')
+
+async def generate_empty_analysis():
+    return RegressionAnalysis(analysis='')
+
+async def analyze_regression_results(
+        regression_results: list[RegressionResult],
+        design: TableDesign,
+        result_tables: ResultTables,
+        model: ChatOpenAI,
+        language_used: str = "Chinese",
+) -> None:
+    """
+    Analyze regression results with table
+    """
+    analysis_result: list[RegressionAnalysis] = []
+    analysis_tasks = []
+    used_regression_result: list[int] = get_used_regression_result(design)
+
+    for i in range(len(result_tables.tables)):
+        if i not in used_regression_result:
+            analysis_tasks.append(generate_empty_analysis())
+        else:
+            analysis_tasks.append(
+                analyze_regression_result(
+                    regression_config=regression_results[i].regression_config,
+                    regression_description=result_tables.description[i],
+                    regression_table=result_tables.tables[i].latex_table,
+                    model=model,
+                    language_used=language_used
+                )
+            )
+
+    result_tables.analysis = await asyncio.gather(*analysis_tasks)

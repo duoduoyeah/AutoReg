@@ -7,10 +7,11 @@ setup(
     install_requires=[
         "litellm",
         "linearmodels",
+        "pandas",
     ],
     author="Shiyuan Li",
     author_email="lizhicuo2020@gmail.com",
-    description="Tools for automatic register setup and table generation",
+    description="Tools for automatic regression, table generation, and analysis.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="",

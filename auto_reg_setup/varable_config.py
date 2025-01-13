@@ -4,6 +4,9 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
 from ..static.langchain_query import LangchainQueries
 from typing import Optional
+
+# TODO: This file need to be rewrite
+
 # Define regression model data structure
 class RegressionModel(BaseModel):
     type: str = Field(default="basic_regression", description="Type of regression model")

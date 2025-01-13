@@ -7,6 +7,7 @@ class DefaultDict(dict):
 
 class LangchainQueries:
     """Class for storing prompts used with langchain."""
+
     REGRESSION_TABLE_DESIGNER = """
     My research topic is: {research_topic}
     
@@ -123,22 +124,30 @@ For your reference:
     """
 
     ANALYSIS_QUERY = """
-    Our topic is: {research_topic}
-    Currently, we are running the {analysis_type} analysis.
+    Your task is to analyze the regression result and write analysis.
+    
+    The configuration of the regression is:
+    {regression_config}
+
+    The description of the regression is:
+    {regression_description}
+
     The result of the analysis in table format is:
-    {regression_result_table}
+    {regression_table}
 
     Your task is to analyze the result by the table column by column and provide a summary of the analysis. Please focus on:
     1. The statistical significance and magnitude of coefficients
     2. The economic interpretation of the results
     3. How the results change when control variables are added
-    4. Any notable patterns or trends across specifications
-    Provide a clear and concise summary that highlights the key findings and their implications.
-    Writing style should be concise, right-branch, and easy to understand.
-    Your response language should be {language_used}.
-    Your response should use latex format.
-    """
 
+    Your analysis requirement:
+    1. Provide a clear and concise summary that highlights the key findings and their implications.
+    2. Writing style should be concise, right-branch, and easy to understand.
+    3. Your response language should be {language_used}.
+    4. Your response should use latex format.
+    5. Don't analyze control variables and constant.
+    6. Within 400 words for each regression column in the table.
+    """
 
     EQUATION_QUERY = """
     Our topic is: {research_topic}
