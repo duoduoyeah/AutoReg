@@ -6,9 +6,8 @@ Auto Reg is a Python module for [brief description of what your module does].
 
 
 
-## Usage
-
-[Add usage examples here]
+## Document
+[Document here](https://salty-impatiens-ec1.notion.site/AutoReg-1755b94d731880ea8334e43110610f27)
 
 ## Contributing
 
