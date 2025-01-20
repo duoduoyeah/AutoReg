@@ -1,8 +1,11 @@
-from pydantic import Field, BaseModel, AfterValidator
+# data pipeline: 
+# dataframe and research config -> regression config 
+
+from pydantic import Field, BaseModel
 import pandas as pd
-from typing import Annotated, List
 
 
+# TODO: this is not used
 regression_models: dict[str, str] = {
     "basic_regression": "panel data regression model",
     "robustness": "panel data regression model for robustness test",
@@ -32,10 +35,10 @@ class RegressionConfig(BaseRegressionConfig):
     run_another_regression_without_controls: bool = False
 
     # extra variables
-    instrument_var: str | None = None
-    instrument_var_description: str | None = None
-    group_var: str | None = None
-    group_var_description: str | None = None
+    instrument_var: str = ""
+    instrument_var_description: str = ""
+    group_var: str = ""
+    group_var_description: str = ""
 
     @classmethod
     def create_with_base(cls, 
@@ -57,24 +60,9 @@ class RegressionConfig(BaseRegressionConfig):
         """String representation of RegressionConfig, excluding None values and empty lists"""
         attributes = []
         for key, value in self.__dict__.items():
-            if value is not None and value != []:
+            if value:
                 attributes.append(f"{key}: {value}")
         return "\n".join(attributes)
-
-    def get_vars(self) -> str:
-        """Get the variables of the regression"""
-        var_info = ""
-        if self.dependent_vars:
-            var_info += f"The dependent variable is: {self.dependent_vars}\n"
-        if self.independent_vars:
-            var_info += f"The independent variable is: {self.independent_vars}\n"
-        if self.control_vars:
-            var_info += f"The control variable is: {self.control_vars}\n"
-        if self.instrument_var:
-            var_info += f"The instrument variable is: {self.instrument_var}\n"
-        if self.group_var:
-            var_info += f"The group variable is: {self.group_var}\n"
-        return var_info
 
 class ResearchConfig(BaseModel):
     """Data class to store research configurations
@@ -203,11 +191,11 @@ class ResearchConfig(BaseModel):
         )
         
         if self.run_another_regression_without_controls:
-            regression_types = f"Two Basic regressions.with and without controls"
+            regression_description = f"Two Basic regressions.with and without controls"
         else:
-            regression_types = "One Basic regression"
+            regression_description = "One Basic regression"
 
-        configs[regression_types] = basic_regression_config
+        configs[regression_description] = basic_regression_config
 
         # Robustness test configs
 
@@ -221,7 +209,8 @@ class ResearchConfig(BaseModel):
                 )
                 temp_config.independent_vars = [x_var]
                 temp_config.independent_var_description = [self.replacement_x_vars_description[i]]
-                configs[f"robustness test - alternative independent variable: {x_var} to replace the independent variable {self.independent_vars[0]}"] = temp_config
+                regression_description = f"robustness test - alternative independent variable: {x_var} to replace the independent variable {self.independent_vars[0]}"
+                configs[regression_description] = temp_config
 
         if self.replacement_y_vars is not None:
             for i, y_var in enumerate(self.replacement_y_vars):
@@ -232,7 +221,8 @@ class ResearchConfig(BaseModel):
                 )
                 temp_config.dependent_vars = [y_var]
                 temp_config.dependent_var_description = [self.replacement_y_vars_description[i]]
-                configs[f"robustness test - alternative dependent variable: {y_var} to replace the dependent variable {self.dependent_vars[0]}"] = temp_config
+                regression_description = f"robustness test - alternative dependent variable: {y_var} to replace the dependent variable {self.dependent_vars[0]}"
+                configs[regression_description] = temp_config
 
         # - Alternative fixed effects specifications
         if self.extra_effects is not None:
@@ -241,8 +231,8 @@ class ResearchConfig(BaseModel):
                 regression_type="robustness",
                 effects=self.extra_effects,
             )
-
-            configs[f"robustness test - alternative fixed effects: {self.extra_effects_vars} to replace the fixed effects {self.effects_vars}"] = temp_config
+            regression_description = f"robustness test - alternative fixed effects: {self.extra_effects_vars} to replace the fixed effects {self.effects_vars}"
+            configs[regression_description] = temp_config
 
         # robustness test by adding extra control variables
         if self.extra_control_vars is not None:
@@ -253,7 +243,8 @@ class ResearchConfig(BaseModel):
             )
             temp_config.control_vars.extend(self.extra_control_vars)
             temp_config.control_vars_description.extend(self.extra_control_vars_description)
-            configs[f"robustness test - adding extra control variables: {self.extra_control_vars}"] = temp_config
+            regression_description = f"robustness test - adding extra control variables: {self.extra_control_vars}"
+            configs[regression_description] = temp_config
 
 
         # Endogeneity test config 
@@ -267,7 +258,8 @@ class ResearchConfig(BaseModel):
                     instrument_var=instrument_var,
                     instrument_var_description=self.instrument_vars_description[i],
                 )
-                configs[f"2SLS endogeneity test - instrument variables: {instrument_var}. The explanatory variable is: {self.independent_vars[0]}. The explained variable is: {self.dependent_vars[0]}"] = temp_config
+                regression_description = f"2SLS endogeneity test - instrument variables: {instrument_var}. The explanatory variable is: {self.independent_vars[0]}. The explained variable is: {self.dependent_vars[0]}"
+                configs[regression_description] = temp_config
 
         # Mediating effect config
         if self.mediating_vars is not None:
@@ -279,9 +271,8 @@ class ResearchConfig(BaseModel):
                 )
                 temp_config.dependent_vars = [mediating_var]
                 temp_config.dependent_var_description = [self.mediating_vars_description[i]]
-
-                configs[f"mediating effect test by test the correlation between independent variables and mediating variables. The mediating variable is: {mediating_var}. The independent variable is: {self.independent_vars[0]}."] = temp_config
-
+                regression_description = f"mediating effect test by test the correlation between independent variables and mediating variables. The mediating variable is: {mediating_var}. The independent variable is: {self.independent_vars[0]}."
+                configs[regression_description] = temp_config
 
         # Moderating effect config
         # TODO: Add configs for:
@@ -307,10 +298,14 @@ class ResearchConfig(BaseModel):
         """String representation of RegressionConfig, excluding None values and empty lists"""
         attributes = []
         for key, value in self.__dict__.items():
-            if value is not None and value != []:
+            if value:
                 attributes.append(f"{key}: {value}")
         return "\n".join(attributes)
 
+
+def get_descriptions(regression_config:dict[str, RegressionConfig]) -> dict[str, str]:
+    """Get the descriptions of the regression config"""
+    return {key: value.regression_type for key, value in regression_config.items()}
 
 if __name__ == '__main__':
     research_config = ResearchConfig(

@@ -1,11 +1,12 @@
+# TODO: This file need to be rewrite
+
+
 from pydantic import BaseModel, Field
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
 from ..static.langchain_query import LangchainQueries
 from typing import Optional
-
-# TODO: This file need to be rewrite
 
 # Define regression model data structure
 class RegressionModel(BaseModel):

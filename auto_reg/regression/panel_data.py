@@ -1,7 +1,7 @@
 from linearmodels.panel import PanelOLS
 import pandas as pd
 from linearmodels.panel.results import PanelEffectsResults
-from ..auto_reg_setup.regression_config import RegressionConfig
+from .regression_config import RegressionConfig
 from pydantic import BaseModel, ConfigDict
 
 class RegressionResult(BaseModel):
@@ -211,9 +211,9 @@ def run_regressions(df: pd.DataFrame,
     
     regression_results: list[RegressionResult] = []
 
-    for reg_type, reg_config in regression_configs.items():        
+    for regression_description, reg_config in regression_configs.items():        
         if reg_config.instrument_var is not None:
-            modify_description = f"{reg_type}\n The first regression result is the one with instrumental variable, i.e. stage 1 of 2SLS\n The second regression result is the one use predicted values from the first stage, i.e. stage 2 of 2SLS\n"
+            modify_description = f"{regression_description}\n The first regression result is the one with instrumental variable, i.e. stage 1 of 2SLS\n The second regression result is the one use predicted values from the first stage, i.e. stage 2 of 2SLS\n"
             regression_results.append(
                 RegressionResult(
                     description=modify_description, 
@@ -222,7 +222,7 @@ def run_regressions(df: pd.DataFrame,
                     regression_config=reg_config))
 
         elif reg_config.group_var is not None:
-            modify_description = f"{reg_type}\n The first regression result is the one with dummy variable == 0\n The second regression result is the one with dummy variable == 1"
+            modify_description = f"{regression_description}\n The first regression result is the one with dummy variable == 0\n The second regression result is the one with dummy variable == 1"
             regression_results.append(
                 RegressionResult(
                     description=modify_description, 
@@ -231,11 +231,11 @@ def run_regressions(df: pd.DataFrame,
                     regression_config=reg_config))
         else:
             if reg_config.run_another_regression_without_controls:
-                reg_type = f"{reg_type}\n The first regression result is the one without controls\n The second regression result is the one with controls"
+                regression_description = f"{regression_description}\n The first regression result is the one without controls\n The second regression result is the one with controls"
 
             regression_results.append(
                 RegressionResult(
-                    description=reg_type, 
+                    description=regression_description, 
                     results=panel_regression(df, reg_config),
                     regression_type=get_function_name(panel_regression), 
                     regression_config=reg_config))

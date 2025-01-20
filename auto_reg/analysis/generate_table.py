@@ -10,10 +10,10 @@ from langchain_openai import ChatOpenAI
 from linearmodels.panel.results import PanelEffectsResults
 
 # Local imports
-from ..auto_reg_setup.regression_config import RegressionConfig, ResearchConfig
-from ..reg_model.panel_data import *
+from ..regression.regression_config import RegressionConfig
+from ..regression.panel_data import *
 from ..static.langchain_query import LangchainQueries
-from .models import RegressionEquation, RegressionAnalysis, RegressionResultTable, ResultTables, TableDesign
+from .models import RegressionAnalysis, RegressionResultTable, ResultTables, TableDesign
 
 async def draw_table(
         regression_description: str,
@@ -34,7 +34,7 @@ async def draw_table(
 
             query = LangchainQueries.format_query(
                 query,
-                regression_config=regression_config.get_vars(),
+                regression_config=str(regression_config),
                 regression_description=regression_description,
                 regression_result=str(regression_results),
                 latex_table_template=table_template,
@@ -360,7 +360,7 @@ async def analyze_regression_result(
 
         query = LangchainQueries.format_query(
             LangchainQueries.ANALYSIS_QUERY,
-            regression_config=regression_config,
+            regression_config=str(regression_config),
             regression_description=regression_description,
             regression_table=regression_table,
             language_used=language_used
@@ -384,7 +384,10 @@ async def analyze_regression_result(
         
         return RegressionAnalysis(analysis='')
 
-async def generate_empty_analysis():
+async def generate_empty_analysis() -> RegressionAnalysis:
+    """
+    Generate an empty analysis.
+    """
     return RegressionAnalysis(analysis='')
 
 async def analyze_regression_results(
@@ -402,6 +405,7 @@ async def analyze_regression_results(
     used_regression_result: list[int] = get_used_regression_result(design)
 
     for i in range(len(result_tables.tables)):
+        # if the regression result is not used, generate an empty analysis
         if i not in used_regression_result:
             analysis_tasks.append(generate_empty_analysis())
         else:
