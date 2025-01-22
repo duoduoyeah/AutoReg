@@ -146,9 +146,9 @@ For your reference:
     1. Provide a clear and concise summary that highlights the key findings and their implications.
     2. Writing style should be concise, right-branch, and easy to understand.
     3. Your response language should be {language_used}.
-    4. Your response should use latex format.
+    4. Your response should use latex format. Always remember to add backslash before the special characters.
     5. Don't analyze control variables and constant.
-    6. Within 200 words for each regression column in the table.
+    6. Within 100 words for each regression column in the table.
     """
 
     EQUATION_QUERY = """

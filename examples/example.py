@@ -17,6 +17,7 @@ from auto_reg.analysis.design import *
 #==============================================
 # User need to: add a .env file in the root directory
 dotenv.load_dotenv()
+
 model_4o = ChatOpenAI(
     model_name="gpt-4o",
     timeout=(45.0), # 45 seconds before timeout
@@ -36,8 +37,8 @@ model_deepseek = ChatOpenAI(
 # User need to: map different tasks to specific models
 model: dict[str, ChatOpenAI] = {
     'design_model': model_4o,  # For designing table layouts
-    'draw_model': model_deepseek,  # For drawing regression tables
-    'analysis_model': model_4o,  # For analyzing regression results
+    'draw_model': model_4o,  # For drawing regression tables
+    'analysis_model': model_deepseek,  # For analyzing regression results
 }
 
 #==============================================
@@ -97,7 +98,7 @@ async def main() -> tuple[list[RegressionResult], ResultTables]:
         table_design,
         table_results,
         model['analysis_model'],
-        language_used="English"
+        language_used="chinese" # User need to: adjust the language used(Any legit str is ok)
     )
 
     # combine tables
