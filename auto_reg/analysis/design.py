@@ -104,6 +104,7 @@ def select_table_design(
         TableDesign: The selected table designs.
     """
     if number_of_tables > 0:
+        assert number_of_tables <= len(table_design.table_index), f"The number of tables to select is larger than the number of tables designed, which is {len(table_design.table_index)}."
         return TableDesign(
             table_index = copy.deepcopy(table_design.table_index[:number_of_tables]),
             table_regression_nums = copy.deepcopy(table_design.table_regression_nums[:number_of_tables]),
