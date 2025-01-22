@@ -4,6 +4,12 @@ setup(
     name="auto_reg",
     version="0.1.0",
     packages=find_packages(),
+    package_dir={"": "."},
+    package_data={
+    "auto_reg": [
+        "static/latex/*.tex",
+    ],
+    },
     install_requires=[
         "litellm",
         "linearmodels",
@@ -13,6 +19,7 @@ setup(
         "langsmith",
         "openai",
     ],
+
     author="Shiyuan Li",
     author_email="lizhicuo2020@gmail.com",
     description="Tools for automatic regression, table generation, and analysis.",

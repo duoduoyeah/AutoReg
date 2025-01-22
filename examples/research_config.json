@@ -1,5 +1,5 @@
 {
-    "research_topic": "The relationship between investment in extreme temperature and company stock abnormal return.",
+    "research_topic": "How extreme weather events affect company stock prices",
     "dependent_vars": ["stock_revenue"],
     "dependent_var_description": [
       "Company's abnormal stock returns, calculated as the difference between actual and expected returns"

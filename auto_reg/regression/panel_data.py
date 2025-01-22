@@ -212,7 +212,7 @@ def run_regressions(df: pd.DataFrame,
     regression_results: list[RegressionResult] = []
 
     for regression_description, reg_config in regression_configs.items():        
-        if reg_config.instrument_var is not None:
+        if reg_config.instrument_var:
             modify_description = f"{regression_description}\n The first regression result is the one with instrumental variable, i.e. stage 1 of 2SLS\n The second regression result is the one use predicted values from the first stage, i.e. stage 2 of 2SLS\n"
             regression_results.append(
                 RegressionResult(
@@ -221,7 +221,7 @@ def run_regressions(df: pd.DataFrame,
                     regression_type=get_function_name(two_stage_regression), 
                     regression_config=reg_config))
 
-        elif reg_config.group_var is not None:
+        elif reg_config.group_var:
             modify_description = f"{regression_description}\n The first regression result is the one with dummy variable == 0\n The second regression result is the one with dummy variable == 1"
             regression_results.append(
                 RegressionResult(
