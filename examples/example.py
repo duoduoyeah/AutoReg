@@ -10,7 +10,7 @@ import json
 from auto_reg.regression.regression_config import ResearchConfig
 from auto_reg.regression.panel_data import *
 from auto_reg.analysis.generate_table import *
-
+from auto_reg.analysis.design import *
 
 #==============================================
 # setup langchain model

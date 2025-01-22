@@ -36,7 +36,6 @@ For each XX_vars entry in the JSON file, ensure that the corresponding variable 
 
 
 ### 4. run the example.py file.
-
 ```bash
 python examples/example.py
 ```
