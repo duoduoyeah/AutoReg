@@ -12,6 +12,7 @@ from auto_reg.analysis.generate_table import *
 #==============================================
 # setup langchain model
 #==============================================
+# User need to: add a .env file in the root directory
 dotenv.load_dotenv()
 model_4o = ChatOpenAI(
     model_name="gpt-4o",
@@ -39,7 +40,9 @@ model: dict[str, ChatOpenAI] = {
 #==============================================
 # setup data
 #==============================================
-df = pd.read_csv('temp/simulated_data.csv')
+# User need to: add a data file in the data directory
+file_path = 'libs/auto_reg/examples/data/simulated_data.csv'
+df = pd.read_csv(file_path)
 df = df.set_index(['company_id', 'year'])
 # Remove rows with missing values
 df = df.dropna()
@@ -89,7 +92,8 @@ async def main():
         regression_results,
         table_design,
         table_results,
-        model['analysis_model']
+        model['analysis_model'],
+        language_used="English"
     )
 
     # combine tables
