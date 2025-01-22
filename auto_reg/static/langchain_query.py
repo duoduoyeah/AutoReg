@@ -115,9 +115,9 @@ For your reference:
     
     COMBINE_REGRESSION_TABLE_QUERY = """
     Your task is to create one single regression table in latex format by combining the following regression tables.
+
     Requirement:
-    The width of return table should be within 10cm. 
-    The title of the new table is: {table_title}.
+    1. The title of the new table is: {table_title}.
 
     The tables you should combine are:
     {regression_tables}
