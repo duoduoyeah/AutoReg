@@ -6,8 +6,6 @@ import os
 
 import unittest
 import time
-from io import StringIO
-import sys
 
 CURRENT_FILE = Path(__file__).resolve()
 PANEL_DATA_FILE = os.path.join(
