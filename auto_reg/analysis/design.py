@@ -1,6 +1,7 @@
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
+import copy
 
 from .models import *
 from ..static.langchain_query import LangchainQueries
@@ -88,18 +89,28 @@ def validate_design_regression_tables(output: TableDesign, number_of_results: in
 
 
 def select_table_design(
-        table_design: TableDesign
+        table_design: TableDesign,
+        number_of_tables: int = 0
         ) -> TableDesign:
     """
     Allow the user to use the command line to select multiple table designs to keep.
-
+    Create a new TableDesign object with the selected table designs.
+    
     Args:
         table_design (TableDesign): The designed table output to select from.
+        number_of_tables (int): when larger than 0, the function will not ask the user to select the table designs. But return the first number_of_tables table designs.
 
     Returns:
         TableDesign: The selected table designs.
     """
-
+    if number_of_tables > 0:
+        return TableDesign(
+            table_index = copy.deepcopy(table_design.table_index[:number_of_tables]),
+            table_regression_nums = copy.deepcopy(table_design.table_regression_nums[:number_of_tables]),
+            table_title = copy.deepcopy(table_design.table_title[:number_of_tables]),
+            number_of_tables = number_of_tables
+        )
+    
     def display_table_designs(table_design: TableDesign):
         for i, table in enumerate(table_design.table_index):
             print(f"Table {i + 1}: {table} {table_design.table_title[i]}")
@@ -120,7 +131,7 @@ def select_table_design(
     selected_indices = get_user_selection()
 
     selected_table_design = TableDesign(
-        table_index=[table_design.table_index[i] for i in selected_indices],
+        table_index=[table_design.table_index[i].copy() for i in selected_indices],
         table_regression_nums=[table_design.table_regression_nums[i] for i in selected_indices],
         table_title=[table_design.table_title[i] for i in selected_indices],
         number_of_tables=0

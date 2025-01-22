@@ -68,6 +68,7 @@ async def main() -> tuple[list[RegressionResult], ResultTables]:
         df, 
         research_config.generate_regression_configs()
     )
+    
     # Design regression tables
     table_design: TableDesign|None = await design_regression_tables(
         research_topic,
