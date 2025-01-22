@@ -114,7 +114,9 @@ For your reference:
     """
     
     COMBINE_REGRESSION_TABLE_QUERY = """
-    Your task is to create one single regression table in latex format by combining the following regression tables. Also return the independent variables of each column of the new table.
+    Your task is to create one single regression table in latex format by combining the following regression tables.
+    Requirement:
+    The width of return table should be within 10cm. 
     The title of the new table is: {table_title}.
 
     The tables you should combine are:
@@ -146,7 +148,7 @@ For your reference:
     3. Your response language should be {language_used}.
     4. Your response should use latex format.
     5. Don't analyze control variables and constant.
-    6. Within 400 words for each regression column in the table.
+    6. Within 200 words for each regression column in the table.
     """
 
     EQUATION_QUERY = """
