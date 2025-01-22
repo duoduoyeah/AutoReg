@@ -34,6 +34,7 @@ def parallel_read_df(df: pd.DataFrame, num_threads=5, run_times=10):
         results.extend(list(executor.map(read_df, chunks)))
     return results
 
+
 class TestParallelReadDF(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
