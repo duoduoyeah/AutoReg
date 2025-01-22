@@ -395,12 +395,11 @@ async def analyze_regression_results(
         design: TableDesign,
         result_tables: ResultTables,
         model: ChatOpenAI,
-        language_used: str = "Chinese",
+        language_used: str = "English",
 ) -> None:
     """
     Analyze regression results with table
     """
-    analysis_result: list[RegressionAnalysis] = []
     analysis_tasks = []
     used_regression_result: list[int] = get_used_regression_result(design)
 

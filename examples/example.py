@@ -1,3 +1,6 @@
+# Description: This is an example of how to use the AutoReg module.
+# When user use this file, they need to modify those parts commented with "User need to:".
+
 import dotenv
 import os
 from langchain_openai import ChatOpenAI
@@ -30,7 +33,7 @@ model_deepseek = ChatOpenAI(
     base_url=os.getenv("DEEPSEEK_API_BASE")
 )
 
-# Map different tasks to specific models
+# User need to: map different tasks to specific models
 model: dict[str, ChatOpenAI] = {
     'design_model': model_4o,  # For designing table layouts
     'draw_model': model_deepseek,  # For drawing regression tables
@@ -41,7 +44,7 @@ model: dict[str, ChatOpenAI] = {
 # setup data
 #==============================================
 # User need to: add a data file in the data directory
-file_path = 'libs/auto_reg/examples/data/simulated_data.csv'
+file_path = 'test_data/example_data.csv'
 df = pd.read_csv(file_path)
 df = df.set_index(['company_id', 'year'])
 # Remove rows with missing values
@@ -52,14 +55,15 @@ def load_research_config(config_path: str) -> ResearchConfig:
         config_data = json.load(f)
     return ResearchConfig(**config_data)
 
-research_config = load_research_config('libs/auto_reg/examples/research_config.json')
+research_config = load_research_config('examples/research_config.json')
 research_config.validate_research_config(df)
 research_topic: str = research_config.research_topic
 
 #==============================================
 # main program
 #==============================================
-async def main():
+async def main() -> tuple[list[RegressionResult], ResultTables]:
+    # run regressions
     regression_results = run_regressions(
         df, 
         research_config.generate_regression_configs()
@@ -102,7 +106,29 @@ async def main():
         table_design, 
         model['draw_model'])
 
-    return combined_table_results
+    return regression_results, combined_table_results
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    regressions, tables =asyncio.run(main())
+
+    if not os.path.exists('temp'):
+        os.makedirs('temp')
+
+    with open('temp/raw_regression_result.txt', 'w') as raw_file:
+        for regression in regressions:
+            raw_file.write(str(regression) + '\n')
+
+    with open('temp/analysis.tex', 'w') as analysis_file:
+
+        analysis_file.write("\\documentclass{article}\n")
+        analysis_file.write("\\usepackage{graphicx} % Required for inserting images\n")
+        analysis_file.write("\\usepackage{booktabs}\n")
+        analysis_file.write("\\usepackage{threeparttable}\n")
+        analysis_file.write("\\title{RegressFast}\n")
+        analysis_file.write("\\begin{document}\n")
+
+        for i in range(len(tables.analysis)):
+            analysis_file.write(tables.analysis[i].analysis + '\n')
+            analysis_file.write(tables.tables[i].latex_table + '\n')
+
+        analysis_file.write("\\end{document}\n")
