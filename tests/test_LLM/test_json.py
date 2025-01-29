@@ -10,16 +10,12 @@ if "OPENAI_API_KEY" not in os.environ:
     os.environ["OPENAI_API_BASE"] = os.getenv("DEEPSEEK_API_BASE")
 
 
-
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
-model = ChatOpenAI(
-    model="deepseek-chat",
-    temperature=0
-)
+model = ChatOpenAI(model="deepseek-chat", temperature=0)
 
 
 # Define your desired data structure.

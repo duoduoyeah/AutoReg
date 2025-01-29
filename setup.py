@@ -6,9 +6,9 @@ setup(
     packages=find_packages(),
     package_dir={"": "."},
     package_data={
-    "auto_reg": [
-        "static/latex/*.tex",
-    ],
+        "auto_reg": [
+            "static/latex/*.tex",
+        ],
     },
     install_requires=[
         "litellm",
@@ -19,7 +19,6 @@ setup(
         "langsmith",
         "openai",
     ],
-
     author="Shiyuan Li",
     author_email="lizhicuo2020@gmail.com",
     description="Tools for automatic regression, table generation, and analysis.",
@@ -32,4 +31,4 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.10",
-) 
+)

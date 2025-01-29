@@ -15,14 +15,15 @@ from ..regression.panel_data import *
 from ..static.langchain_query import LangchainQueries
 from .models import RegressionAnalysis, RegressionResultTable, ResultTables, TableDesign
 
+
 async def draw_table(
-        regression_description: str,
-        regression_results: list[PanelEffectsResults],
-        regression_config: RegressionConfig,
-        model: ChatOpenAI,
-        table_template: str,
-        query: str,
-        max_try_times: int = 2
+    regression_description: str,
+    regression_results: list[PanelEffectsResults],
+    regression_config: RegressionConfig,
+    model: ChatOpenAI,
+    table_template: str,
+    query: str,
+    max_try_times: int = 2,
 ) -> RegressionResultTable:
     """
     Draw a table for the regression results.
@@ -44,7 +45,9 @@ async def draw_table(
             prompt = PromptTemplate(
                 template="Answer the user query.\n{format_instructions}\n{query}\n",
                 input_variables=["query"],
-                partial_variables={"format_instructions": parser.get_format_instructions()},
+                partial_variables={
+                    "format_instructions": parser.get_format_instructions()
+                },
             )
 
             chain = prompt | model | parser
@@ -55,10 +58,11 @@ async def draw_table(
 
             return output
         except Exception as e:
-            print(f"Error drawing table on attempt {attempt + 1}: {e}\n the tables is {regression_description}")
+            print(
+                f"Error drawing table on attempt {attempt + 1}: {e}\n the tables is {regression_description}"
+            )
 
-    return RegressionResultTable(latex_table='')
-
+    return RegressionResultTable(latex_table="")
 
 
 def get_table_template(regression_type: str) -> str:
@@ -74,14 +78,16 @@ def get_table_template(regression_type: str) -> str:
     else:
         raise ValueError(f"Invalid regression type: {regression_type}")
 
+
 async def generate_empty_tables():
-    return RegressionResultTable(latex_table='')
+    return RegressionResultTable(latex_table="")
+
 
 async def draw_tables(
-        all_reg_results: list[RegressionResult],
-        design: TableDesign,
-        model: ChatOpenAI,
-        result_tables: ResultTables
+    all_reg_results: list[RegressionResult],
+    design: TableDesign,
+    model: ChatOpenAI,
+    result_tables: ResultTables,
 ) -> None:
     """
     Draw tables for each regression result.
@@ -108,7 +114,7 @@ async def draw_tables(
                     regression_config=regression_config,
                     model=model,
                     table_template=table_template,
-                    query=query
+                    query=query,
                 )
             )
             table_descriptions.append(regression_description)
@@ -121,18 +127,18 @@ async def draw_tables(
 
 
 async def combine_table(
-        table_title: str,
-        combine_tables: list[RegressionResultTable],
-        model: ChatOpenAI,
-        query: str,
-        max_try_times: int = 2
+    table_title: str,
+    combine_tables: list[RegressionResultTable],
+    model: ChatOpenAI,
+    query: str,
+    max_try_times: int = 2,
 ) -> RegressionResultTable:
     """
     Combine multiple tables into one table.
     """
     if len(combine_tables) == 1:
         return combine_tables[0]
-    
+
     for attempt in range(max_try_times):
         try:
             # setup prompt
@@ -141,33 +147,37 @@ async def combine_table(
             query = LangchainQueries.format_query(
                 query,
                 table_title=table_title,
-                regression_tables="\n".join([table.latex_table for table in combine_tables]),
+                regression_tables="\n".join(
+                    [table.latex_table for table in combine_tables]
+                ),
             )
 
             prompt = PromptTemplate(
                 template="Answer the user query.\n{format_instructions}\n{query}\n",
                 input_variables=["query"],
-                partial_variables={"format_instructions": parser.get_format_instructions()},
+                partial_variables={
+                    "format_instructions": parser.get_format_instructions()
+                },
             )
 
             chain = prompt | model | parser
 
             output = await chain.ainvoke({"query": query})
-
             output = RegressionResultTable.model_validate(output)
-
             return output
         except Exception as e:
-            print(f"Error drawing table on attempt {attempt + 1}: {e}\n the tables is {table_title}")
+            print(
+                f"Error drawing table on attempt {attempt + 1}: {e}\n the tables is {table_title}"
+            )
 
-    return RegressionResultTable(latex_table='')
+    return RegressionResultTable(latex_table="")
 
 
 async def combine_tables(
-        tables: ResultTables,
-        design: TableDesign,
-        model: ChatOpenAI,
-        ) -> ResultTables:
+    tables: ResultTables,
+    design: TableDesign,
+    model: ChatOpenAI,
+) -> ResultTables:
     """
     Combine tables together.
     """
@@ -177,9 +187,9 @@ async def combine_tables(
         combine_tasks.append(
             combine_table(
                 table_title=design.table_title[i],
-            combine_tables=tables.get_tables(design.table_index[i]),
-            model=model,
-            query=LangchainQueries.COMBINE_REGRESSION_TABLE_QUERY
+                combine_tables=tables.get_tables(design.table_index[i]),
+                model=model,
+                query=LangchainQueries.COMBINE_REGRESSION_TABLE_QUERY,
             )
         )
         analysis.append(tables.get_analysis(design.table_index[i]))
@@ -193,9 +203,10 @@ async def combine_tables(
         tables=combined_tables,
         index=None,
         description=design.table_title,
-        analysis=analysis
+        analysis=analysis,
     )
     return result_tables
+
 
 def get_used_regression_result(design: TableDesign) -> list[int]:
     """
@@ -207,16 +218,17 @@ def get_used_regression_result(design: TableDesign) -> list[int]:
         used_regression_result.extend([index for index in design.table_index[i]])
     return used_regression_result
 
+
 async def analyze_regression_result(
-        regression_config: RegressionConfig,
-        regression_description: str,
-        regression_table: str,
-        model: ChatOpenAI,
-        language_used: str = "Chinese",
+    regression_config: RegressionConfig,
+    regression_description: str,
+    regression_table: str,
+    model: ChatOpenAI,
+    language_used: str = "Chinese",
 ) -> RegressionAnalysis:
     """
     Analyze regression results.
-    
+
     Information to be given to the language model:
     - research topic
     - previous analysis as reference
@@ -237,13 +249,15 @@ async def analyze_regression_result(
             regression_config=str(regression_config),
             regression_description=regression_description,
             regression_table=regression_table,
-            language_used=language_used
+            language_used=language_used,
         )
 
         prompt = PromptTemplate(
-        template="Answer the user query.\n{format_instructions}\n{query}\n",
-        input_variables=["query"],
-        partial_variables={"format_instructions": parser.get_format_instructions()},
+            template="Answer the user query.\n{format_instructions}\n{query}\n",
+            input_variables=["query"],
+            partial_variables={
+                "format_instructions": parser.get_format_instructions()
+            },
         )
 
         chain = prompt | model | parser
@@ -254,22 +268,26 @@ async def analyze_regression_result(
 
         return output
     except Exception as e:
-        print(f"Error analyzing regression result: {e}\n The table is {regression_description}")
-        
-    return RegressionAnalysis(analysis='')
+        print(
+            f"Error analyzing regression result: {e}"
+        )
+
+    return RegressionAnalysis(analysis="")
+
 
 async def generate_empty_analysis() -> RegressionAnalysis:
     """
     Generate an empty analysis.
     """
-    return RegressionAnalysis(analysis='')
+    return RegressionAnalysis(analysis="")
+
 
 async def analyze_regression_results(
-        regression_results: list[RegressionResult],
-        design: TableDesign,
-        result_tables: ResultTables,
-        model: ChatOpenAI,
-        language_used: str = "English",
+    regression_results: list[RegressionResult],
+    design: TableDesign,
+    result_tables: ResultTables,
+    model: ChatOpenAI,
+    language_used: str = "English",
 ) -> None:
     """
     Analyze regression results with table
@@ -288,7 +306,7 @@ async def analyze_regression_results(
                     regression_description=result_tables.description[i],
                     regression_table=result_tables.tables[i].latex_table,
                     model=model,
-                    language_used=language_used
+                    language_used=language_used,
                 )
             )
 
