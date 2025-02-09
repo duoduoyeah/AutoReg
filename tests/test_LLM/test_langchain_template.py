@@ -66,7 +66,13 @@ R-squared          & 0.0294        & 0.0672 \\
 regression_config = RegressionConfig(
     dependent_vars=["stock revenue"],
     independent_vars=["extreme temperature"],
-    control_vars=["company size", "company age", "company distance to sea", "rain amount", "dry amount"],
+    control_vars=[
+        "company size",
+        "company age",
+        "company distance to sea",
+        "rain amount",
+        "dry amount",
+    ],
     instrument_var="company latitude",
     constant=True,
 )

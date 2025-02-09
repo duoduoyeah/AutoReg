@@ -46,7 +46,7 @@ async def design_regression_tables(
         output = TableDesign.model_validate(output)
 
         if validate_design_regression_tables(output, len(regression_results)):
-            print(f"Get valid table design")
+            print("Get valid table design")
             break
 
     remove_reg_descriptions(regression_results)
@@ -58,7 +58,8 @@ def validate_design_regression_tables(
 ) -> bool:
     """
     Validate the design of regression tables.
-    It verifies that all indices from 0 to the number of results are present without duplication.
+    It verifies that all indices from 0 to the number of results
+    are present without duplication.
 
     Args:
         output (TableDesign): The designed table output to validate.
@@ -102,7 +103,9 @@ def select_table_design(
 
     Args:
         table_design (TableDesign): The designed table output to select from.
-        number_of_tables (int): when larger than 0, the function will not ask the user to select the table designs. But return the first number_of_tables table designs.
+        number_of_tables (int): when larger than 0, the function will not ask
+        the user to select the table designs.
+        But return the first number_of_tables table designs.
 
     Returns:
         TableDesign: The selected table designs.
@@ -110,7 +113,8 @@ def select_table_design(
     if number_of_tables > 0:
         assert number_of_tables <= len(
             table_design.table_index
-        ), f"The number of tables to select is larger than the number of tables designed, which is {len(table_design.table_index)}."
+        ), f"The number of tables to select is larger than the number of \
+            tables designed, which is {len(table_design.table_index)}."
         return TableDesign(
             table_index=copy.deepcopy(table_design.table_index[:number_of_tables]),
             table_regression_nums=copy.deepcopy(
@@ -128,7 +132,8 @@ def select_table_design(
         while True:
             try:
                 selection = input(
-                    "Enter the numbers of the table designs to keep (e.g., 1,2,3) separated by commas: "
+                    "Enter the numbers of the table designs to keep (e.g., 1,2,3)\
+                    separated by commas: "
                 )
                 selected_indices = [
                     int(num.strip()) - 1 for num in selection.split(",")
@@ -140,7 +145,8 @@ def select_table_design(
                     return selected_indices
                 else:
                     print(
-                        f"Invalid selection. Please enter numbers between 1 and {len(table_design.table_index)} separated by commas."
+                        f"Invalid selection. Please enter numbers \
+                    between 1 and {len(table_design.table_index)} separated by commas."
                     )
             except ValueError:
                 print("Invalid input. Please enter valid numbers separated by commas.")

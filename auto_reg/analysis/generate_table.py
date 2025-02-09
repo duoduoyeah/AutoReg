@@ -255,9 +255,7 @@ async def analyze_regression_result(
         prompt = PromptTemplate(
             template="Answer the user query.\n{format_instructions}\n{query}\n",
             input_variables=["query"],
-            partial_variables={
-                "format_instructions": parser.get_format_instructions()
-            },
+            partial_variables={"format_instructions": parser.get_format_instructions()},
         )
 
         chain = prompt | model | parser
@@ -268,9 +266,7 @@ async def analyze_regression_result(
 
         return output
     except Exception as e:
-        print(
-            f"Error analyzing regression result: {e}"
-        )
+        print(f"Error analyzing regression result: {e}")
 
     return RegressionAnalysis(analysis="")
 
