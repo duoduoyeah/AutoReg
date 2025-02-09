@@ -1,4 +1,4 @@
-# Auto Reg
+# Auto Data Regression
 
 Auto Reg is a Python module for panel data regression, generating regression tables, and reporting results. 
 Check out the demo below to see how quickly the regression can be solved.
