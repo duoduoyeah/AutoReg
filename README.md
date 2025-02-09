@@ -1,9 +1,13 @@
-# Auto Reg
+# Auto Data Regression
 
-Auto Reg is a Python module for [brief description of what your module does].
-
+Auto Reg is a Python module for panel data regression, generating regression tables, and reporting results. 
+Check out the demo below to see how quickly the regression can be solved.
 ## Document
-[Document here](https://salty-impatiens-ec1.notion.site/AutoReg-1755b94d731880ea8334e43110610f27)
+[![Document](https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white)](https://salty-impatiens-ec1.notion.site/AutoReg-1755b94d731880ea8334e43110610f27)
+
+## Demo Links
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](http://colab.research.google.com/github/duoduoyeah/AutoReg/blob/main/examples/example.ipynb)
+
 
 ## Installation
 

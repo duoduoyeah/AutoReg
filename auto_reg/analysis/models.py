@@ -3,12 +3,12 @@ from linearmodels.panel.results import PanelEffectsResults
 
 
 class RegressionEquation(BaseModel):
-    equation: str = Field(description="regression equation", default="")
-    analysis: str = Field(description="regression result analysis", default="")
+    equation: str
+    analysis: str
 
 
 class RegressionAnalysis(BaseModel):
-    analysis: str = Field(description="regression result analysis", default="")
+    analysis: str = Field(description="the analysis of the regression results")
 
 
 class RegressionResultTable(BaseModel):

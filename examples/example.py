@@ -4,6 +4,7 @@ import pdb
 import dotenv
 import os
 from langchain_openai import ChatOpenAI
+from langchain_deepseek import ChatDeepSeek
 import pandas as pd
 import json
 
@@ -17,18 +18,19 @@ from auto_reg.analysis.design import *
 # ==============================================
 # User need to: add a .env file in the root directory
 dotenv.load_dotenv()
+
 model_4o = ChatOpenAI(
     model_name="gpt-4o",
-    timeout=(45.0),  # 45 seconds before timeout
+    timeout=(60.0),  # 45 seconds before timeout
     temperature=0,
     api_key=os.getenv("OPENAI_API_KEY"),
     base_url=os.getenv("OPENAI_API_BASE"),
 )
 
-model_deepseek = ChatOpenAI(
+model_deepseek = ChatDeepSeek(
     model_name="deepseek-chat",
     temperature=0,
-    timeout=(45.0),
+    timeout=(130.0),
     api_key=os.getenv("DEEPSEEK_API_KEY"),
     base_url=os.getenv("DEEPSEEK_API_BASE"),
 )
@@ -36,15 +38,15 @@ model_deepseek = ChatOpenAI(
 # User need to: map different tasks to specific models
 model: dict[str, ChatOpenAI] = {
     "design_model": model_4o,  # For designing table layouts
-    "draw_model": model_deepseek,  # For drawing regression tables
-    "analysis_model": model_4o,  # For analyzing regression results
+    "draw_model": model_4o,  # For drawing regression tables
+    "analysis_model": model_deepseek,  # For analyzing regression results
 }
 
 # ==============================================
 # setup data
 # ==============================================
 # User need to: add a data file in the data directory
-file_path = "test_data/example_data.csv"
+file_path = "./test_data/example_data.csv"
 df = pd.read_csv(file_path)
 df = df.set_index(["company_id", "year"])
 # Remove rows with missing values
@@ -89,6 +91,9 @@ async def main() -> tuple[list[RegressionResult], ResultTables]:
         regression_results, table_design, model["draw_model"], table_results
     )
 
+    # Add breakpoint for debugging
+    breakpoint()
+    # User need to: adjust the language used(Any legit str is ok)
     await analyze_regression_results(
         regression_results,
         table_design,

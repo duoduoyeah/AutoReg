@@ -124,7 +124,7 @@ For your reference:
     """
 
     ANALYSIS_QUERY = """
-    Your task is to analyze the regression result and write analysis.
+    Your task is to analyze the regression result and write analysis in latex format.
     
     The configuration of the regression is:
     {regression_config}
@@ -135,18 +135,12 @@ For your reference:
     The result of the analysis in table format is:
     {regression_table}
 
-    Your task is to analyze the result by the table column by column and provide a summary of the analysis. Please focus on:
-    1. The statistical significance and magnitude of coefficients
-    2. The economic interpretation of the results
-    3. How the results change when control variables are added
-
     Your analysis requirement:
     1. Provide a clear and concise summary that highlights the key findings and their implications.
-    2. Writing style should be concise, right-branch, and easy to understand.
-    3. Your response language should be {language_used}.
-    4. Your response should use latex format.
-    5. Don't analyze control variables and constant.
-    6. Within 200 words for each regression column in the table.
+    2. Your response language should be {language_used}.
+    3. Your response should use latex format. Always remember to add backslash before the special characters.
+    4. Don't analyze control variables and constant.
+    5. Analysis should be within 100 words for each regression column in the table.
     """
 
     EQUATION_QUERY = """
