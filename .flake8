@@ -1,0 +1,12 @@
+[flake8]
+exclude =
+    # __init__.py file imports raise warnings about unused imports
+    __init__.py
+ignore =
+    # allow import with *
+    F403, F405
+
+# Let black handle the line lengths
+max-line-length = 90
+# but black won't touch comments, so flake8 can still handle those
+max-doc-length = 90

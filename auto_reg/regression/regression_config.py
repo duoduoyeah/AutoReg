@@ -1,5 +1,5 @@
-# data pipeline: 
-# dataframe and research config -> regression config 
+# data pipeline:
+# dataframe and research config -> regression config
 
 from pydantic import Field, BaseModel
 import pandas as pd
@@ -10,15 +10,17 @@ regression_models: dict[str, str] = {
     "basic_regression": "panel data regression model",
     "robustness": "panel data regression model for robustness test",
     "mediating_effect": "panel data regression model for examining mediating effect",
-    "moderating_effect": "panel data regression model for examining moderating effect", 
+    "moderating_effect": "panel data regression model for examining moderating effect",
     "heterogeneity": "panel data regression model for examining heterogeneity",
-    "endogeneity": "panel data regression model for examining endogeneity"
+    "endogeneity": "panel data regression model for examining endogeneity",
 }
+
 
 class BaseRegressionConfig(BaseModel):
     """Base configuration with common variables across all regressions"""
+
     dependent_vars: list[str] = []
-    dependent_var_description: list[str] = [] 
+    dependent_var_description: list[str] = []
     independent_vars: list[str] = []
     independent_var_description: list[str] = []
     control_vars: list[str] = []
@@ -28,7 +30,10 @@ class BaseRegressionConfig(BaseModel):
 
 class RegressionConfig(BaseRegressionConfig):
     """Data class to store regression configurations"""
-    regression_type: str = Field(default="basic regression", description="Description of regression model")
+
+    regression_type: str = Field(
+        default="basic regression", description="Description of regression model"
+    )
     effects: list[str] = []
 
     # extra settings
@@ -41,9 +46,9 @@ class RegressionConfig(BaseRegressionConfig):
     group_var_description: str = ""
 
     @classmethod
-    def create_with_base(cls, 
-                        base_config: BaseRegressionConfig, 
-                        **kwargs) -> 'RegressionConfig':
+    def create_with_base(
+        cls, base_config: BaseRegressionConfig, **kwargs
+    ) -> "RegressionConfig":
         """Factory method to create RegressionConfig with base configuration"""
         return cls(
             dependent_vars=base_config.dependent_vars,
@@ -53,9 +58,9 @@ class RegressionConfig(BaseRegressionConfig):
             control_vars=base_config.control_vars,
             control_vars_description=base_config.control_vars_description,
             constant=base_config.constant,
-            **kwargs
+            **kwargs,
         )
-    
+
     def __str__(self) -> str:
         """String representation of RegressionConfig, excluding None values and empty lists"""
         attributes = []
@@ -64,12 +69,13 @@ class RegressionConfig(BaseRegressionConfig):
                 attributes.append(f"{key}: {value}")
         return "\n".join(attributes)
 
+
 class ResearchConfig(BaseModel):
     """Data class to store research configurations
-    
+
     All variables in this class are lists of strings, which allows them to be concatenated together when needed.
     For example, you can combine control_vars with extra_control_vars to create a larger list of control variables.
-    
+
     effects: list[str] | None = None # fixed effects used for all regression except robustness test by adding extra control variables
     effects at most 2 effects. effect must use "entity" and "time" when denote index vars.
 
@@ -78,9 +84,10 @@ class ResearchConfig(BaseModel):
     effect must use "entity" and "time" when denote index vars.
 
     """
+
     # research topic
     research_topic: str = Field(description="research topic", default="")
-    
+
     # core variables
     dependent_vars: list[str] = []
     dependent_var_description: list[str] = []
@@ -106,7 +113,7 @@ class ResearchConfig(BaseModel):
     # supplementary variables for robustness test
     extra_control_vars: list[str] = []
     extra_control_vars_description: list[str] = []
-    
+
     extra_effects: list[str] = []
     extra_effects_vars: list[str] = []
 
@@ -124,16 +131,17 @@ class ResearchConfig(BaseModel):
 
     def _all_vars(self) -> list[str]:
         """Return all variables in the research config"""
-        return self.dependent_vars + \
-                self.independent_vars + \
-                self.control_vars + \
-                self.instrument_vars + \
-                self.group_vars + \
-                self.mediating_vars + \
-                self.extra_control_vars + \
-                self.replacement_x_vars + \
-                self.replacement_y_vars
-
+        return (
+            self.dependent_vars
+            + self.independent_vars
+            + self.control_vars
+            + self.instrument_vars
+            + self.group_vars
+            + self.mediating_vars
+            + self.extra_control_vars
+            + self.replacement_x_vars
+            + self.replacement_y_vars
+        )
 
     def validate_research_config(self, df: pd.DataFrame) -> None:
         """Validate the research config"""
@@ -144,8 +152,8 @@ class ResearchConfig(BaseModel):
             raise ValueError("Control variables are required")
         if self.effects is None:
             raise ValueError("Fixed effects are required")
-        
-        #check variables are in the dataframe
+
+        # check variables are in the dataframe
         for var in self._all_vars():
             if var not in df.columns:
                 raise ValueError(f"Don't have variable {var} in the dataframe")
@@ -156,14 +164,13 @@ class ResearchConfig(BaseModel):
                 if effect not in df.index.names and effect not in df.columns:
                     raise ValueError(f"Don't have variable {effect} in the dataframe")
 
-
     def generate_regression_configs(self) -> dict[str, list[RegressionConfig]]:
         """
         Generate a dictionary of regression configurations based on the research config.
-        
+
         Args:
             research_config: ResearchConfig object containing research configuration
-            
+
         Returns:
             Dictionary mapping regression type strings to RegressionConfig objects
         """
@@ -189,7 +196,7 @@ class ResearchConfig(BaseModel):
             effects=self.effects,
             run_another_regression_without_controls=self.run_another_regression_without_controls,
         )
-        
+
         if self.run_another_regression_without_controls:
             regression_description = f"Two Basic regressions.with and without controls"
         else:
@@ -208,7 +215,9 @@ class ResearchConfig(BaseModel):
                     effects=self.effects,
                 )
                 temp_config.independent_vars = [x_var]
-                temp_config.independent_var_description = [self.replacement_x_vars_description[i]]
+                temp_config.independent_var_description = [
+                    self.replacement_x_vars_description[i]
+                ]
                 regression_description = f"robustness test - alternative independent variable: {x_var} to replace the independent variable {self.independent_vars[0]}"
                 configs[regression_description] = temp_config
 
@@ -220,7 +229,9 @@ class ResearchConfig(BaseModel):
                     effects=self.effects,
                 )
                 temp_config.dependent_vars = [y_var]
-                temp_config.dependent_var_description = [self.replacement_y_vars_description[i]]
+                temp_config.dependent_var_description = [
+                    self.replacement_y_vars_description[i]
+                ]
                 regression_description = f"robustness test - alternative dependent variable: {y_var} to replace the dependent variable {self.dependent_vars[0]}"
                 configs[regression_description] = temp_config
 
@@ -242,12 +253,13 @@ class ResearchConfig(BaseModel):
                 effects=self.effects,
             )
             temp_config.control_vars.extend(self.extra_control_vars)
-            temp_config.control_vars_description.extend(self.extra_control_vars_description)
+            temp_config.control_vars_description.extend(
+                self.extra_control_vars_description
+            )
             regression_description = f"robustness test - adding extra control variables: {self.extra_control_vars}"
             configs[regression_description] = temp_config
 
-
-        # Endogeneity test config 
+        # Endogeneity test config
         # - Instrumental variables regression (2SLS)
         if self.instrument_vars is not None:
             for i, instrument_var in enumerate(self.instrument_vars):
@@ -270,15 +282,15 @@ class ResearchConfig(BaseModel):
                     effects=self.effects,
                 )
                 temp_config.dependent_vars = [mediating_var]
-                temp_config.dependent_var_description = [self.mediating_vars_description[i]]
+                temp_config.dependent_var_description = [
+                    self.mediating_vars_description[i]
+                ]
                 regression_description = f"mediating effect test by test the correlation between independent variables and mediating variables. The mediating variable is: {mediating_var}. The independent variable is: {self.independent_vars[0]}."
                 configs[regression_description] = temp_config
 
         # Moderating effect config
         # TODO: Add configs for:
         # - Interaction terms
-
-
 
         # Heterogeneity analysis config
         if self.group_vars is not None:
@@ -290,7 +302,9 @@ class ResearchConfig(BaseModel):
                     group_var=group_var,
                     group_var_description=self.group_vars_description[i],
                 )
-                configs[f"heterogeneity test by group variable: {group_var}"] = temp_config
+                configs[f"heterogeneity test by group variable: {group_var}"] = (
+                    temp_config
+                )
 
         return configs
 
@@ -303,11 +317,12 @@ class ResearchConfig(BaseModel):
         return "\n".join(attributes)
 
 
-def get_descriptions(regression_config:dict[str, RegressionConfig]) -> dict[str, str]:
+def get_descriptions(regression_config: dict[str, RegressionConfig]) -> dict[str, str]:
     """Get the descriptions of the regression config"""
     return {key: value.regression_type for key, value in regression_config.items()}
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     research_config = ResearchConfig(
         research_topic="abnormal stock return",
         dependent_vars=["stock_revenue"],

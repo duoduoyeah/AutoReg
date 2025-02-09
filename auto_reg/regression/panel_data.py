@@ -4,12 +4,17 @@ from linearmodels.panel.results import PanelEffectsResults
 from .regression_config import RegressionConfig
 from pydantic import BaseModel, ConfigDict
 
+
 class RegressionResult(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     description: str  # A textual description of the regression result
-    results: list[PanelEffectsResults]  # A list of regression results from the panel data model
+    results: list[
+        PanelEffectsResults
+    ]  # A list of regression results from the panel data model
     regression_type: str  # The type of regression performed
-    regression_config: RegressionConfig  # The configuration settings used for the regression
+    regression_config: (
+        RegressionConfig  # The configuration settings used for the regression
+    )
 
 
 def fixed_effects(effects: list[str], df: pd.DataFrame) -> tuple[bool, bool, bool]:
@@ -25,24 +30,26 @@ def fixed_effects(effects: list[str], df: pd.DataFrame) -> tuple[bool, bool, boo
         entity_effects = True
     else:
         entity_effects = False
-    
+
     if "time" in effects:
         time_effects = True
     else:
         time_effects = False
-        
+
     other_effects = None
     other_cols = [col for col in effects if col not in ["entity", "time"]]
     if len(other_cols) == 1:
         other_effects = df[other_cols[0]]
     elif len(other_cols) > 1:
         other_effects = df[other_cols]
-    
+
     return entity_effects, time_effects, other_effects
 
-def panel_regression(df: pd.DataFrame,
-                    regression_config: RegressionConfig,
-                    ) -> list[PanelEffectsResults]:
+
+def panel_regression(
+    df: pd.DataFrame,
+    regression_config: RegressionConfig,
+) -> list[PanelEffectsResults]:
     """
     Basic panel data model.
 
@@ -50,18 +57,16 @@ def panel_regression(df: pd.DataFrame,
     """
     regression_results = []
 
-    
     dep_var = df[regression_config.dependent_vars]
-    
-    
+
     exog_vars = df[regression_config.independent_vars + regression_config.control_vars]
 
-    
     if regression_config.constant:
         exog_vars = exog_vars.assign(constant=1)
 
-    entity_effects, time_effects, other_effects = fixed_effects(regression_config.effects, df)
-
+    entity_effects, time_effects, other_effects = fixed_effects(
+        regression_config.effects, df
+    )
 
     model = PanelOLS(
         dependent=dep_var,
@@ -81,7 +86,7 @@ def panel_regression(df: pd.DataFrame,
         exog_vars = df[regression_config.independent_vars]
         if regression_config.constant:
             exog_vars = exog_vars.assign(constant=1)
-            
+
         model = PanelOLS(
             dependent=dep_var,
             exog=exog_vars,
@@ -91,22 +96,22 @@ def panel_regression(df: pd.DataFrame,
         )
         result = model.fit(cov_type="clustered", cluster_entity=True)
         regression_results = [result] + regression_results
-    
-    
 
-    return regression_results   
+    return regression_results
 
 
-def two_stage_regression(df: pd.DataFrame, regression_config: RegressionConfig) -> list[PanelEffectsResults]:
+def two_stage_regression(
+    df: pd.DataFrame, regression_config: RegressionConfig
+) -> list[PanelEffectsResults]:
     """
     Two stage regression using instrumental variables (2SLS)
-    
+
     First stage: Regress endogenous variable on instruments and controls
     Second stage: Use predicted values from first stage
     """
     # Get the endogenous variable (first independent variable)
     endogenous_var = regression_config.independent_vars[0]
-    
+
     # First stage: regress endogenous variable on instrument and controls
     dep_var = df[endogenous_var]  # endogenous variable is now dependent variable
     exog_vars = df[[regression_config.instrument_var] + regression_config.control_vars]
@@ -114,25 +119,29 @@ def two_stage_regression(df: pd.DataFrame, regression_config: RegressionConfig) 
     if regression_config.constant:
         exog_vars = exog_vars.assign(constant=1)
 
-    entity_effects, time_effects, other_effects = fixed_effects(regression_config.effects, df)
-    
+    entity_effects, time_effects, other_effects = fixed_effects(
+        regression_config.effects, df
+    )
+
     model = PanelOLS(
         dependent=dep_var,
         exog=exog_vars,
         entity_effects=entity_effects,
         time_effects=time_effects,
         other_effects=other_effects,
-    )   
+    )
     first_stage = model.fit(cov_type="clustered", cluster_entity=True)
-    
+
     # Second stage: use predicted values
     df_with_predicted = df.copy()
-    df_with_predicted[f'{endogenous_var}_predicted'] = first_stage.fitted_values
-    
+    df_with_predicted[f"{endogenous_var}_predicted"] = first_stage.fitted_values
+
     # Run second stage with predicted values
     dep_var = df_with_predicted[regression_config.dependent_vars]
-    exog_vars = df_with_predicted[[f'{endogenous_var}_predicted'] + regression_config.control_vars]
-    
+    exog_vars = df_with_predicted[
+        [f"{endogenous_var}_predicted"] + regression_config.control_vars
+    ]
+
     model = PanelOLS(
         dependent=dep_var,
         exog=exog_vars,
@@ -144,7 +153,10 @@ def two_stage_regression(df: pd.DataFrame, regression_config: RegressionConfig) 
 
     return [first_stage, second_stage]
 
-def group_regression(df: pd.DataFrame, regression_config: RegressionConfig) -> list[PanelEffectsResults]:
+
+def group_regression(
+    df: pd.DataFrame, regression_config: RegressionConfig
+) -> list[PanelEffectsResults]:
     """
     Group regression.
 
@@ -152,28 +164,32 @@ def group_regression(df: pd.DataFrame, regression_config: RegressionConfig) -> l
     The second regression is the one with dummy variable == 1
     """
     group_var = regression_config.group_var
-    
+
     # Split sample based on group variable
     df_group_0 = df[df[group_var] == 0]
     df_group_1 = df[df[group_var] == 1]
-    
+
     # Run regression for each group
     results = []
     for group_df in [df_group_0, df_group_1]:
         dep_var = group_df[regression_config.dependent_vars]
 
-        exog_vars = group_df[regression_config.independent_vars + regression_config.control_vars]
+        exog_vars = group_df[
+            regression_config.independent_vars + regression_config.control_vars
+        ]
         if regression_config.constant:
             exog_vars = exog_vars.assign(constant=1)
 
-        entity_effects, time_effects, other_effects = fixed_effects(regression_config.effects, group_df)
-        
+        entity_effects, time_effects, other_effects = fixed_effects(
+            regression_config.effects, group_df
+        )
+
         model = PanelOLS(
             dependent=dep_var,
             exog=exog_vars,
             entity_effects=entity_effects,
             time_effects=time_effects,
-            other_effects=other_effects
+            other_effects=other_effects,
         )
         results.append(model.fit(cov_type="clustered", cluster_entity=True))
 
@@ -183,21 +199,23 @@ def group_regression(df: pd.DataFrame, regression_config: RegressionConfig) -> l
 def get_function_name(func) -> str:
     """
     Returns the name of the function as a string.
-    
+
     :param func: The function whose name is to be returned.
     :return: The name of the function.
     """
     return func.__name__
 
-def run_regressions(df: pd.DataFrame, 
-                    regression_configs: dict[str, RegressionConfig]) -> list[RegressionResult]:
+
+def run_regressions(
+    df: pd.DataFrame, regression_configs: dict[str, RegressionConfig]
+) -> list[RegressionResult]:
     """
     Run regressions based on the regression config
-    
+
     Requirement: Double Indexed DataFrame
         With the first index being the entity and the second index being the time.
 
-    Return: 
+    Return:
     A list of RegressionResult, each contains:
     1. the regression description
     2. the regression result
@@ -208,39 +226,46 @@ def run_regressions(df: pd.DataFrame,
     # check if the df is double indexed
     if not isinstance(df.index, pd.MultiIndex):
         raise ValueError("DataFrame must be double indexed")
-    
+
     regression_results: list[RegressionResult] = []
 
-    for regression_description, reg_config in regression_configs.items():        
+    for regression_description, reg_config in regression_configs.items():
         if reg_config.instrument_var:
             modify_description = f"{regression_description}\n The first regression result is the one with instrumental variable, i.e. stage 1 of 2SLS\n The second regression result is the one use predicted values from the first stage, i.e. stage 2 of 2SLS\n"
             regression_results.append(
                 RegressionResult(
-                    description=modify_description, 
+                    description=modify_description,
                     results=two_stage_regression(df, reg_config),
-                    regression_type=get_function_name(two_stage_regression), 
-                    regression_config=reg_config))
+                    regression_type=get_function_name(two_stage_regression),
+                    regression_config=reg_config,
+                )
+            )
 
         elif reg_config.group_var:
             modify_description = f"{regression_description}\n The first regression result is the one with dummy variable == 0\n The second regression result is the one with dummy variable == 1"
             regression_results.append(
                 RegressionResult(
-                    description=modify_description, 
+                    description=modify_description,
                     results=group_regression(df, reg_config),
-                    regression_type=get_function_name(group_regression), 
-                    regression_config=reg_config))
+                    regression_type=get_function_name(group_regression),
+                    regression_config=reg_config,
+                )
+            )
         else:
             if reg_config.run_another_regression_without_controls:
                 regression_description = f"{regression_description}\n The first regression result is the one without controls\n The second regression result is the one with controls"
 
             regression_results.append(
                 RegressionResult(
-                    description=regression_description, 
+                    description=regression_description,
                     results=panel_regression(df, reg_config),
-                    regression_type=get_function_name(panel_regression), 
-                    regression_config=reg_config))
+                    regression_type=get_function_name(panel_regression),
+                    regression_config=reg_config,
+                )
+            )
 
     return regression_results
+
 
 def add_reg_descriptions(regression_results: list[RegressionResult]) -> None:
     """
@@ -248,6 +273,7 @@ def add_reg_descriptions(regression_results: list[RegressionResult]) -> None:
     """
     for i, reg_result in enumerate(regression_results):
         reg_result.description = f"Index: {i}\n Under Index {i}, the number of regressions is: {len(reg_result.results)}\n{reg_result.description}\n "
+
 
 def remove_reg_descriptions(regression_results: list[RegressionResult]) -> None:
     """

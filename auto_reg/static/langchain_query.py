@@ -1,5 +1,6 @@
 import os
 
+
 class DefaultDict(dict):
     def __missing__(self, key):
         return ""
@@ -29,7 +30,6 @@ class LangchainQueries:
     3. The number of regression for each table.
     4. Table title for each regression table.
     """
-
 
     RESEARCH_TOPIC_PROMPT = """
     I will conduct financial research and perform panel data regression to validate my findings.
@@ -88,8 +88,6 @@ class LangchainQueries:
 
     Please analyze these variables and set up an appropriate {model_type} structure."""
 
-
-    
     REGRESSION_TABLE_QUERY = """
     Your task is to create one single regression table in latex format for the following regression {number_of_results} results.
     
@@ -112,7 +110,7 @@ For your reference:
     3. Don't use underline in latex, use space instead.
     4. One column, one regression result.
     """
-    
+
     COMBINE_REGRESSION_TABLE_QUERY = """
     Your task is to create one single regression table in latex format by combining the following regression tables.
     Requirement:
@@ -160,20 +158,20 @@ For your reference:
     """
 
     current_folder = os.path.dirname(os.path.abspath(__file__))
-    latex_folder = os.path.join(current_folder, 'latex')
-    with open(os.path.join(latex_folder, 'basic.tex'), 'r') as file:
+    latex_folder = os.path.join(current_folder, "latex")
+    with open(os.path.join(latex_folder, "basic.tex"), "r") as file:
         BASIC_TABLE = file.read()
 
-    with open(os.path.join(latex_folder, 'iv.tex'), 'r') as file:
+    with open(os.path.join(latex_folder, "iv.tex"), "r") as file:
         IV_TABLE = file.read()
-    
-    with open(os.path.join(latex_folder, 'group.tex'), 'r') as file:
-        GROUP_TABLE = file.read()
 
+    with open(os.path.join(latex_folder, "group.tex"), "r") as file:
+        GROUP_TABLE = file.read()
 
     @staticmethod
     def format_query(query: str, **kwargs) -> str:
         return query.format_map(DefaultDict(kwargs))
+
 
 if __name__ == "__main__":
     print(LangchainQueries.BASIC_TABLE, end="\n\n\n\n\n\n")
