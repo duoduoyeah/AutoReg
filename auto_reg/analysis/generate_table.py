@@ -213,7 +213,6 @@ def get_used_regression_result(design: TableDesign) -> list[int]:
     Get the regression results that are used to create the tables.
     """
     used_regression_result = []
-    used_regression_result = []
     for i in range(len(design.table_index)):
         used_regression_result.extend([index for index in design.table_index[i]])
     return used_regression_result
@@ -242,7 +241,8 @@ async def analyze_regression_result(
         RegressionAnalysis: The regression result analysis.
     """
     try:
-        parser = JsonOutputParser(pydantic_object=RegressionAnalysis)
+        # Leave the parameter empty, no need for langchain build-in validation
+        parser = JsonOutputParser()
 
         query = LangchainQueries.format_query(
             LangchainQueries.ANALYSIS_QUERY,
