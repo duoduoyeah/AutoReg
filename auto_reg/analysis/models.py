@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field
-from linearmodels.panel.results import PanelEffectsResults
 
 
 class RegressionEquation(BaseModel):
@@ -8,7 +7,7 @@ class RegressionEquation(BaseModel):
 
 
 class RegressionAnalysis(BaseModel):
-    analysis: str = Field(description="the analysis of the regression results")
+    analysis: str
 
 
 class RegressionResultTable(BaseModel):

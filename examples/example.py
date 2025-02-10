@@ -1,6 +1,5 @@
 # Description: This is an example of how to use the AutoReg module.
 # When user use this file, they need to modify those parts commented with "User need to:".
-import pdb
 import dotenv
 import os
 from langchain_openai import ChatOpenAI
@@ -58,7 +57,7 @@ def load_research_config(config_path: str) -> ResearchConfig:
         config_data = json.load(f)
     return ResearchConfig(**config_data)
 
-
+# User need to: modify the json file
 research_config = load_research_config("examples/research_config.json")
 research_config.validate_research_config(df)
 research_topic: str = research_config.research_topic
@@ -91,8 +90,6 @@ async def main() -> tuple[list[RegressionResult], ResultTables]:
         regression_results, table_design, model["draw_model"], table_results
     )
 
-    # Add breakpoint for debugging
-    breakpoint()
     # User need to: adjust the language used(Any legit str is ok)
     await analyze_regression_results(
         regression_results,

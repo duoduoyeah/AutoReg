@@ -4,15 +4,16 @@ from langchain_core.prompts import PromptTemplate
 import copy
 
 from .models import *
-from ..static.langchain_query import LangchainQueries
+from ..static import LangchainQueries
 from ..regression.panel_data import *
-
+from ..errors import DesignError, ChainConfigurationError
+from ..language_model import run_chain
 
 async def design_regression_tables(
     research_topic: str,
     regression_results: list[RegressionResult],
     model: ChatOpenAI,
-    max_try_times: int = 2,
+    max_try_times: int = 3,
 ) -> TableDesign | None:
     """
     Design regression tables.
@@ -20,78 +21,86 @@ async def design_regression_tables(
     """
     add_reg_descriptions(regression_results)
     for _ in range(max_try_times):
-        parser = JsonOutputParser(pydantic_object=TableDesign)
+        try:
+            parser = JsonOutputParser(pydantic_object=TableDesign)
 
-        combined_regression_descriptions = "\n".join(
-            [results.description for results in regression_results]
-        )
+            combined_regression_descriptions = "\n".join(
+                [results.description for results in regression_results]
+            )
 
-        query = LangchainQueries.format_query(
-            LangchainQueries.REGRESSION_TABLE_DESIGNER,
-            research_topic=research_topic,
-            regression_result=combined_regression_descriptions,
-            number_of_results=len(regression_results) - 1,
-        )
+            query = LangchainQueries.format_query(
+                LangchainQueries.REGRESSION_TABLE_DESIGNER,
+                research_topic=research_topic,
+                regression_result=combined_regression_descriptions,
+                number_of_results=len(regression_results) - 1,
+            )
 
-        prompt = PromptTemplate(
-            template="Answer the user query.\n{format_instructions}\n{query}\n",
-            input_variables=["query"],
-            partial_variables={"format_instructions": parser.get_format_instructions()},
-        )
+            prompt = PromptTemplate(
+                template="Answer the user query.\n{format_instructions}\n{query}\n",
+                input_variables=["query"],
+                partial_variables={"format_instructions": parser.get_format_instructions()},
+            )
 
-        chain = prompt | model | parser
+            chain = prompt | model | parser
+        except Exception:
+            raise ChainConfigurationError(extra_info={
+                "error place": "design regression",
+                })
 
-        output = await chain.ainvoke({"query": query})
-
-        output = TableDesign.model_validate(output)
-
-        if validate_design_regression_tables(output, len(regression_results)):
-            print("Get valid table design")
-            break
-
+        try:
+            output = await run_chain(
+                chain, 
+                query,
+                RegressionResultTable, 
+                "draw_table",)
+            validate_design_regression_tables(output, len(regression_results))
+            return output
+        except Exception as e:
+            print(e)
+            continue
+        
     remove_reg_descriptions(regression_results)
     return output
 
 
 def validate_design_regression_tables(
     output: TableDesign, number_of_results: int
-) -> bool:
+) -> None:
     """
     Validate the design of regression tables.
     It verifies that all indices from 0 to the number of results
     are present without duplication.
-
+    
     Args:
         output (TableDesign): The designed table output to validate.
         number_of_results (int): The total number of regression results.
-
-    Returns:
-        bool: True if the design is valid, False otherwise.
+        
+    Raises:
+        DesignError: If the table design is invalid
     """
     unique_numbers = set()
 
     for table in output.table_index:
         # Check if the table has more than 2 regression results
         if len(table) > 2:
-            return False
+            raise DesignError({"error": "Table cannot have more than 2 regression results"})
 
         for index in table:
             # Check if index is within valid range
             if index < 0 or index >= number_of_results:
-                return False
+                raise DesignError({"error": f"Invalid index {index} outside range 0 to {number_of_results-1}"})
 
             # Check for duplicates
             if index in unique_numbers:
-                return False
+                raise DesignError({"error": f"Duplicate index {index} found"})
 
             unique_numbers.add(index)
 
     # Check if all indices from 0 to 'number_of_results - 1' are present
     if len(unique_numbers) != number_of_results:
-        return False
+        raise DesignError({"error": "Not all regression results are used in tables"})
     elif output.number_of_tables != len(output.table_index):
-        return False
-    return True
+        raise DesignError({"error": "Number of tables does not match table index length"})
 
 
 def select_table_design(

@@ -1,3 +1,5 @@
+# This file may be deprecated
+
 import os
 from pathlib import Path
 import pandas as pd
