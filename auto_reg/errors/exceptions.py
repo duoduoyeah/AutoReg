@@ -91,3 +91,13 @@ class DesignError(CustomException):
     ):
         message = Messages.DESIGNERROR
         super().__init__(message=message, extra_info=extra_info)
+
+class ResultTableError(CustomException):
+    """Exception raised when the result table has inconsistent data"""
+
+    def __init__(
+        self,
+        extra_info: Optional[Dict] = None,
+    ):
+        message = Messages.RESULTTABLEERROR
+        super().__init__(message=message, extra_info=extra_info)

@@ -44,3 +44,9 @@ class Messages:
     DESIGNERROR = """
     The table design is invalid.
     """
+
+    RESULTTABLEERROR = """
+    The result table has inconsistent data.
+    Possible scenarios:
+        1. The lengths of tables, descriptions, and analysis lists are not equal.
+    """

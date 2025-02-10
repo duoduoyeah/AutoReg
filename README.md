@@ -3,6 +3,11 @@
 Auto Reg is a Python module for generate regression tables, rffortlessly. Input your questionable research topic and cleaned data—and let the tool poops out regression tables.
 Input your questionable research topic and cleaned data—and let the tool poops out regression tables.
 Check out the demo below to see how quickly the regression can be solved.
+
+## Support Format
+- PDF
+- Word
+- Latex
 ## Document
 [![Document](https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white)](https://salty-impatiens-ec1.notion.site/AutoReg-1755b94d731880ea8334e43110610f27)
 

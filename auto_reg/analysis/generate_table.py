@@ -124,10 +124,10 @@ async def draw_tables(
             table_descriptions.append(regression_description)
 
     results: list[RegressionResultTable] = await asyncio.gather(*table_tasks)
-    assert len(results) == len(table_descriptions)
-
     result_tables.tables = results
     result_tables.description = table_descriptions
+    result_tables.analysis = [RegressionAnalysis(latex_analysis="") for _ in range(len(results))]
+    result_tables.assert_valid()
 
 
 async def combine_table(
@@ -212,7 +212,6 @@ async def combine_tables(
 
     result_tables = ResultTables(
         tables=combined_tables,
-        index=None,
         description=design.table_title,
         analysis=analysis,
     )
@@ -289,14 +288,14 @@ async def analyze_regression_result(
             print(e)
             continue
 
-    return RegressionAnalysis(analysis="")
+    return RegressionAnalysis(latex_analysis="")
 
 
 async def generate_empty_analysis() -> RegressionAnalysis:
     """
     Generate an empty analysis.
     """
-    return RegressionAnalysis(analysis="")
+    return RegressionAnalysis(latex_analysis="")
 
 
 async def analyze_regression_results(

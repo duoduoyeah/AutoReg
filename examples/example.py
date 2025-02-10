@@ -127,7 +127,7 @@ if __name__ == "__main__":
         analysis_file.write("\\begin{document}\n")
 
         for i in range(len(tables.analysis)):
-            analysis_file.write(tables.analysis[i].analysis + "\n")
+            analysis_file.write(tables.analysis[i].latex_analysis + "\n")
             analysis_file.write(tables.tables[i].latex_table + "\n")
 
         analysis_file.write("\\end{document}\n")

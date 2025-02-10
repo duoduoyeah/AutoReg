@@ -13,7 +13,7 @@ async def autoreg(
     json_path: str,
     data_index: list[str],
     models: dict[str, ChatOpenAI],
-    output_path: str = "./temp/",
+    output_dir: str = "./temp/",
     analaysis_language: str = "Chinese",
     verbose: bool = False,
     output_type: str = "latex",

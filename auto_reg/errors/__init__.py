@@ -6,5 +6,6 @@ __all__ = [
     "ChainInvocationError",
     "DataClassError",
     "ChainConfigurationError",
-    "DesignError"
+    "DesignError",
+    "ResultTableError",
 ]

@@ -17,6 +17,8 @@ setup(
         "langchain",
         "langchain-openai",
         "openai",
+        "pylatex",
+        "pandoc",
     ],
     extras_require={
         "dev": [
