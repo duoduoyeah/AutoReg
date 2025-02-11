@@ -7,16 +7,21 @@ from ..regression.panel_data import *
 from ..analysis.generate_table import *
 from ..analysis.design import *
 from ..errors import *
+from ..output.document_generator import (
+    create_tex, 
+    generate_word, 
+    generate_pdf,
+    generate_tex,
+)
 
 async def autoreg(
-    data_path: str,
-    json_path: str,
-    data_index: list[str],
+    data: pd.DataFrame,
+    research_configuration: ResearchConfig,
     models: dict[str, ChatOpenAI],
-    output_dir: str = "./temp/",
+    output_path: str = "./temp/autoreg",
     analaysis_language: str = "Chinese",
     verbose: bool = False,
-    output_type: str = "latex",
+    output_types: list[str] = ["latex", "word", "pdf"],
 ):
 
     """Run automated regression analysis pipeline.
@@ -27,15 +32,23 @@ async def autoreg(
         models: Dictionary of AI models for different tasks. Requires:
             - table_model: For table rendering
             - analysis_model: For table interpretation
-        data_index: Column names/positions to use as DataFrame index. 
-            Default [0,1] (first two columns)
-        analaysis_language: Language for output analysis. 
-            Default Chinese
-    """
+        data_index: Column names/positions to use as DataFrame index
+        output_path: Directory path for output files. Default "./temp/autoreg"
+        analaysis_language: Language for output analysis. Default "Chinese"
+        verbose: Whether to print table design info. Default False
+        output_types: List of output formats to generate. Default ["latex", "word", "pdf"]
 
-    data = setup_data(data_path, data_index)
-    research_configuration = load_research_config(json_path)
-    research_configuration.validate_research_config(data)
+    Returns:
+        None
+
+    Changes:
+        Creates output files in specified formats at output_path location
+
+    Raises:
+        ConfigError: If research configuration is invalid
+        DataError: If data format is incorrect
+        ModelError: If AI model responses are invalid
+    """
     
     # run regressions
     regression_results = run_regressions(
@@ -77,25 +90,57 @@ async def autoreg(
         table_results, table_design, models["table_model"]
     )
 
-    if output_type == "latex":
-        pass
-    else:
-        raise ValueError(f"Output type {output_type} hasn't been defined.")
-        
-def setup_data(data_path, data_index):
+    for output_type in output_types:
+        try:
+            if output_type == "latex":
+                doc = create_tex(combined_table_results)
+                generate_tex(doc, output_path)
+            elif output_type == "word":
+                generate_word(doc, combined_table_results)
+            elif output_type == "pdf":
+                generate_pdf(doc, output_path)
+            else:
+                print(f"Output type '{output_type}' is not supported. Supported types are: latex, word, pdf")
+        except OutputFileError as e:
+            print(e)
+            continue
+
+def setup_data(data_path, data_index, json_path):
+    """
+    Load data and research configuration from file paths.
+
+    Args:
+        data_path: Path to dataset file (CSV or Excel format)
+        data_index: Column names/positions to use as DataFrame index
+        json_path: Path to research configuration JSON file
+
+    Returns:
+        Tuple of (DataFrame, ResearchConfig)
+
+    Raises:
+        DataFileError: If data file format is incorrect
+        JsonFileError: If research configuration file format is incorrect
+    """
     try:
-        df = pd.read_csv(data_path)
+        if data_path.endswith(".csv"):
+            df = pd.read_csv(data_path)
+        elif data_path.endswith(".xlsx"):
+            df = pd.read_excel(data_path)
+        else:
+            raise ValueError(f"Unsupported file type: {data_path}")
         df = df.set_index(data_index)
         rows = df.shape[0]
         df.dropna(inplace=True)
         droped_rows = rows - df.shape[0]
         if droped_rows/rows > 0.2:
            warnings.warn("missing value rows is larger than 20%%")
-
-        return df            
     except:
         raise DataFileError
 
+    research_configuration = load_research_config(json_path)
+    research_configuration.validate_research_config(df)
+
+    return df, research_configuration
 
 def load_research_config(config_path: str) -> ResearchConfig:
     try:

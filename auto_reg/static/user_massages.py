@@ -5,6 +5,7 @@ class Messages:
     Possible senarios:
         1. the data path is incorrect.
         2. the data index is mispelled or incorrect.
+        3. the data file has problem.
     """
     MISSING_ENVIRONMENT_VARIABLES = """
     The Language Model object is not correctly set up.
@@ -49,4 +50,11 @@ class Messages:
     The result table has inconsistent data.
     Possible scenarios:
         1. The lengths of tables, descriptions, and analysis lists are not equal.
+    """
+    
+    OUTPUTFILEERROR = """
+    The output file failed to generate.
+    Possible scenarios:
+        1. The output file path is incorrect.
+        2. The output file convertion failed.
     """

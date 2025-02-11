@@ -3,7 +3,7 @@
 
 from pydantic import Field, BaseModel
 import pandas as pd
-
+from ..errors import JsonFileError
 
 # TODO: this is not used
 regression_models: dict[str, str] = {
@@ -147,22 +147,22 @@ class ResearchConfig(BaseModel):
         """Validate the research config"""
         # Check variables are defined
         if self.dependent_vars is None or self.independent_vars is None:
-            raise ValueError("Dependent and independent variables are required")
+            raise JsonFileError(extra_info={"error": "Dependent and independent variables are required"})
         if self.control_vars is None:
-            raise ValueError("Control variables are required")
+            raise JsonFileError(extra_info={"error": "Control variables are required"})
         if self.effects is None:
-            raise ValueError("Fixed effects are required")
+            raise JsonFileError(extra_info={"error": "Fixed effects are required"})
 
         # check variables are in the dataframe
         for var in self._all_vars():
             if var not in df.columns:
-                raise ValueError(f"Don't have variable {var} in the dataframe")
+                raise JsonFileError(extra_info={"error": f"Don't have variable {var} in the dataset"})
 
         if self.effects_vars:
             all_effects = (self.effects_vars or []) + (self.extra_effects_vars or [])
             for effect in all_effects:
                 if effect not in df.index.names and effect not in df.columns:
-                    raise ValueError(f"Don't have variable {effect} in the dataframe")
+                    raise JsonFileError(extra_info={"error": f"Don't have variable {effect} in the dataset"})
 
     def generate_regression_configs(self) -> dict[str, list[RegressionConfig]]:
         """

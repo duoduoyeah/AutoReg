@@ -101,3 +101,13 @@ class ResultTableError(CustomException):
     ):
         message = Messages.RESULTTABLEERROR
         super().__init__(message=message, extra_info=extra_info)
+
+class OutputFileError(CustomException):
+    """Exception raised when the output file has problem"""
+
+    def __init__(
+        self,
+        extra_info: Optional[Dict] = None,
+    ):
+        message = Messages.OUTPUTFILEERROR
+        super().__init__(message=message, extra_info=extra_info)
