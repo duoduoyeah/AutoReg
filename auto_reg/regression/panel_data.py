@@ -7,13 +7,13 @@ from pydantic import BaseModel, ConfigDict
 
 class RegressionResult(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    description: str  # A textual description of the regression result
+    description: str
     results: list[
         PanelEffectsResults
-    ]  # A list of regression results from the panel data model
-    regression_type: str  # The type of regression performed
+    ]
+    regression_type: str
     regression_config: (
-        RegressionConfig  # The configuration settings used for the regression
+        RegressionConfig
     )
 
 

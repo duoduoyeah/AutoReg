@@ -1,7 +1,8 @@
 from pylatex import Document, Section, Subsection
-from auto_reg.analysis.models import ResultTables
+from ..analysis.models import ResultTables
 import pandoc
 from ..errors import OutputFileError
+from .tex_convertor import convert_to_latex
 
 def fill_document(doc, tables, with_analysis):
     """Add a section, a subsection and some text to the document.
@@ -13,7 +14,7 @@ def fill_document(doc, tables, with_analysis):
         for table, description, analysis in tables.iterate_table():
             with doc.create(Subsection(description)):
                 if with_analysis:
-                    doc.append(analysis.latex_analysis)
+                    doc.append(convert_to_latex(analysis.latex_analysis))
                 doc.append(table.latex_table)
 
 def create_tex(
@@ -33,7 +34,7 @@ def create_tex(
     except Exception as e:
         raise OutputFileError(extra_info={"extra_info": str(e)})
     
-def gemerate_tex(
+def generate_tex(
     doc,
     filepath: str,
 ):

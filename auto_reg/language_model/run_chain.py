@@ -1,4 +1,4 @@
-from ..errors import ChainError, DataClassError
+from ..errors import ChainInvocationError, DataClassError
 from typing import Optional
 
 async def run_chain(chain, 
@@ -18,7 +18,7 @@ async def run_chain(chain,
             "query": query,
             "output": output_data,
         }
-        raise ChainError(extra_info=extra_info)
+        raise ChainInvocationError(extra_info=extra_info)
 
     try:
         output = output_data.model_validate(output)

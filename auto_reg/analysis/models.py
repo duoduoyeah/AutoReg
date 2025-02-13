@@ -45,7 +45,7 @@ class ResultTables(BaseModel):
     def iterate_table(self):
         for i in range(len(self.tables)):
             yield (self.tables[i], self.description[i], self.analysis[i])
-            
+
 
 class TableDesign(BaseModel):
     """

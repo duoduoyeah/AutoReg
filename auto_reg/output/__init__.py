@@ -1,4 +1,4 @@
-from auto_reg import autoreg
+from .autoreg import autoreg
 
 __all__ = [
     autoreg,

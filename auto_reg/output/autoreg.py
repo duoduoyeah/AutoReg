@@ -7,11 +7,11 @@ from ..regression.panel_data import *
 from ..analysis.generate_table import *
 from ..analysis.design import *
 from ..errors import *
-from ..output.document_generator import (
+from .document_generator import (
     create_tex, 
     generate_word, 
     generate_pdf,
-    generate_tex,
+    generate_tex
 )
 
 async def autoreg(
