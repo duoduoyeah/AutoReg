@@ -19,12 +19,12 @@ regression_models: dict[str, str] = {
 class BaseRegressionConfig(BaseModel):
     """Base configuration with common variables across all regressions"""
 
-    dependent_vars: list[str] = []
-    dependent_var_description: list[str] = []
-    independent_vars: list[str] = []
-    independent_var_description: list[str] = []
-    control_vars: list[str] = []
-    control_vars_description: list[str] = []
+    dependent_vars: list[str] = Field(default_factory=list)
+    dependent_var_description: list[str] = Field(default_factory=list)
+    independent_vars: list[str] = Field(default_factory=list)
+    independent_var_description: list[str] = Field(default_factory=list)
+    control_vars: list[str] = Field(default_factory=list)
+    control_vars_description: list[str] = Field(default_factory=list)
     constant: bool = True
 
 
@@ -34,7 +34,7 @@ class RegressionConfig(BaseRegressionConfig):
     regression_type: str = Field(
         default="basic regression", description="Description of regression model"
     )
-    effects: list[str] = []
+    effects: list[str] = Field(default_factory=list)
 
     # extra settings
     run_another_regression_without_controls: bool = False
@@ -89,42 +89,42 @@ class ResearchConfig(BaseModel):
     research_topic: str = Field(description="research topic", default="")
 
     # core variables
-    dependent_vars: list[str] = []
-    dependent_var_description: list[str] = []
-    independent_vars: list[str] = []
-    independent_var_description: list[str] = []
+    dependent_vars: list[str] = Field(default_factory=list)
+    dependent_var_description: list[str] = Field(default_factory=list)
+    independent_vars: list[str] = Field(default_factory=list)
+    independent_var_description: list[str] = Field(default_factory=list)
 
     # control variables
-    control_vars: list[str] = []
-    control_vars_description: list[str] = []
+    control_vars: list[str] = Field(default_factory=list)
+    control_vars_description: list[str] = Field(default_factory=list)
 
     # instrument variables
-    instrument_vars: list[str] = []
-    instrument_vars_description: list[str] = []
+    instrument_vars: list[str] = Field(default_factory=list)
+    instrument_vars_description: list[str] = Field(default_factory=list)
 
     # group variables for heterogeneity analysis
-    group_vars: list[str] = []
-    group_vars_description: list[str] = []
+    group_vars: list[str] = Field(default_factory=list)
+    group_vars_description: list[str] = Field(default_factory=list)
 
     # mediating variables
-    mediating_vars: list[str] = []
-    mediating_vars_description: list[str] = []
+    mediating_vars: list[str] = Field(default_factory=list)
+    mediating_vars_description: list[str] = Field(default_factory=list)
 
     # supplementary variables for robustness test
-    extra_control_vars: list[str] = []
-    extra_control_vars_description: list[str] = []
+    extra_control_vars: list[str] = Field(default_factory=list)
+    extra_control_vars_description: list[str] = Field(default_factory=list)
 
-    extra_effects: list[str] = []
-    extra_effects_vars: list[str] = []
+    extra_effects: list[str] = Field(default_factory=list)
+    extra_effects_vars: list[str] = Field(default_factory=list)
 
-    replacement_x_vars: list[str] = []
-    replacement_x_vars_description: list[str] = []
-    replacement_y_vars: list[str] = []
-    replacement_y_vars_description: list[str] = []
+    replacement_x_vars: list[str] = Field(default_factory=list)
+    replacement_x_vars_description: list[str] = Field(default_factory=list)
+    replacement_y_vars: list[str] = Field(default_factory=list)
+    replacement_y_vars_description: list[str] = Field(default_factory=list)
 
     # basic regression settings
-    effects: list[str] = []
-    effects_vars: list[str] = []
+    effects: list[str] = Field(default_factory=list)
+    effects_vars: list[str] = Field(default_factory=list)
 
     constant: bool = True
     run_another_regression_without_controls: bool = True
