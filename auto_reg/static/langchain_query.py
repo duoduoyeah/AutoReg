@@ -140,7 +140,8 @@ For your reference:
     2. Your response language should be {language_used}.
     3. Your response should use latex format. Always remember to add backslash before the special characters.
     4. Don't analyze control variables and constant.
-    5. Analysis should be within 100 words for each regression column in the table.
+    5. Analysis should be within 250 words for each regression column in the table.
+    6. Focus on the real meaning of variables.
     """
 
     EQUATION_QUERY = """

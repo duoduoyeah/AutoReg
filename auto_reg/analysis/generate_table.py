@@ -202,13 +202,18 @@ async def combine_tables(
                 query=LangchainQueries.COMBINE_REGRESSION_TABLE_QUERY,
             )
         )
-        analysis.append(tables.get_analysis(design.table_index[i]))
+        analysis.append(tables.combine_analysis(design.table_index[i]))
 
     combined_tables: list[RegressionResultTable] = await asyncio.gather(*combine_tasks)
 
     assert len(combined_tables) == len(analysis)
     assert len(combined_tables) == design.number_of_tables
-
+    # delete later
+    if True:
+        print("combined_tables: ", combined_tables,"\n")
+        print("analysis: ", analysis,"\n")
+        print("design.table_title: ", design.table_title,"\n")
+        
     result_tables = ResultTables(
         tables=combined_tables,
         description=design.table_title,
@@ -251,7 +256,7 @@ async def analyze_regression_result(
         RegressionAnalysis: The regression result analysis.
     """
     try:
-        parser = JsonOutputParser(RegressionAnalysis)
+        parser = JsonOutputParser(pydantic_object=RegressionAnalysis)
 
         query = LangchainQueries.format_query(
             LangchainQueries.ANALYSIS_QUERY,
@@ -270,9 +275,10 @@ async def analyze_regression_result(
 
         chain = prompt | model | parser
 
-    except Exception:
+    except Exception as e:
         raise ChainConfigurationError(extra_info={
             "error place": "analyze_regression_result",
+            "error": e,
             })
 
     for _ in range(max_try_times): 
@@ -280,7 +286,7 @@ async def analyze_regression_result(
             output = await run_chain(
                 chain, 
                 query, 
-                RegressionResultTable, 
+                RegressionAnalysis, 
                 "draw_table",)
             return output
         except Exception as e:

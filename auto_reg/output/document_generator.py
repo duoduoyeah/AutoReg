@@ -1,8 +1,8 @@
-from pylatex import Document, Section, Subsection
 from ..analysis.models import ResultTables
 import pandoc
 from ..errors import OutputFileError
 from .tex_convertor import convert_to_latex
+from pylatex import Document, Section, Subsection, NoEscape, Package
 
 def fill_document(doc, tables, with_analysis):
     """Add a section, a subsection and some text to the document.
@@ -14,16 +14,17 @@ def fill_document(doc, tables, with_analysis):
         for table, description, analysis in tables.iterate_table():
             with doc.create(Subsection(description)):
                 if with_analysis:
-                    doc.append(convert_to_latex(analysis.latex_analysis))
-                doc.append(table.latex_table)
+                    doc.append(NoEscape(convert_to_latex(analysis.latex_analysis)))
+                doc.append(NoEscape(table.latex_table))
 
 def create_tex(
     tables: ResultTables,
     with_analysis: bool = True,
 ):
     try:
-        doc = Document("ctexart")
-
+        doc = Document(documentclass="ctexart")
+        doc.packages.append(Package('booktabs')) 
+        doc.packages.append(Package('threeparttable')) 
         fill_document(
             doc,
             tables,
@@ -58,7 +59,7 @@ def generate_pdf(
     if filepath.endswith(".pdf"):
         filepath = filepath.replace(".pdf", "")
     try:
-        doc.generate_pdf(filepath, clean_tex=False, compiler="xelatex")
+        doc.generate_pdf(filepath, clean_tex=True, compiler="xelatex")
     except Exception as e:
         raise OutputFileError(
             extra_info={
@@ -68,9 +69,12 @@ def generate_pdf(
 
 
 def generate_word(
-    doc,
+    latex_file: str,
     filepath: str,
 ):
+    assert isinstance(filepath, str)
+    assert latex_file.endswith(".tex")
+    doc = pandoc.read(file=latex_file, format="latex")
     # add the .docx extension
     if not filepath.endswith(".docx"):
         filepath = filepath + ".docx"

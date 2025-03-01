@@ -21,6 +21,7 @@ class Messages:
     """
     
     CHAIN_INVOCATION_ERROR = """
+    CHAIN_INVOCATION_ERROR!
     The langchain chain has problem when invoking the model.
     Possible senarios:
         1. the chain is not properly configured
@@ -57,4 +58,17 @@ class Messages:
     Possible scenarios:
         1. The output file path is incorrect.
         2. The output file convertion failed.
+    """
+
+    MODELERROR = """
+    The model has problem.
+    Possible scenarios:
+        1. Your api key is incorrect.
+        2. Your network can't connect to the model server.
+    """
+    
+    TABLEDESIGNERROR = """
+    The table design is invalid.
+    Possible scenarios:
+        1. The table design is not properly configured.
     """

@@ -111,3 +111,23 @@ class OutputFileError(CustomException):
     ):
         message = Messages.OUTPUTFILEERROR
         super().__init__(message=message, extra_info=extra_info)
+
+class ModelError(CustomException):
+    """Exception raised when the model has problem"""
+
+    def __init__(
+        self,
+        extra_info: Optional[Dict] = None,
+    ):
+        message = Messages.MODELERROR
+        super().__init__(message=message, extra_info=extra_info)
+
+class TableDesignError(CustomException):
+    """Exception raised when the table design is invalid"""
+
+    def __init__(
+        self,
+        extra_info: Optional[Dict] = None,
+    ):
+        message = Messages.TABLEDESIGNERROR
+        super().__init__(message=message, extra_info=extra_info)

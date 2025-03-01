@@ -6,9 +6,16 @@ async def run_chain(chain,
               output_data,
               chain_purpose: Optional[str] = None):
     """
-    Ainvoke the chain and return the output.
-    Raise ChainInvocationError if the chain is not properly configured.
-    Raise DataClassError if the output is not properly validated.
+    Inputs:
+        chain: The chain to invoke.
+        query: The query to pass to the chain.
+        output_data: The data class to validate the output.
+        chain_purpose: The purpose of the chain.
+    Returns:
+        The output of the chain.
+    Raises:
+        ChainInvocationError: If the chain is not properly configured.
+        DataClassError: If the output is not properly validated.
     """
     try:
         output = await chain.ainvoke({"query": query})

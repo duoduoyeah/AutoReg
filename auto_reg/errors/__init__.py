@@ -9,4 +9,6 @@ __all__ = [
     "DesignError",
     "ResultTableError",
     "OutputFileError",
+    "ModelError",
+    "TableDesignError",
 ]

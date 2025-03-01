@@ -48,10 +48,10 @@ async def design_regression_tables(
                 })
 
         try:
-            output = await run_chain(
+            output: TableDesign = await run_chain(
                 chain, 
                 query,
-                RegressionResultTable, 
+                TableDesign, 
                 "draw_table",)
             validate_design_regression_tables(output, len(regression_results))
             return output
@@ -141,7 +141,7 @@ def select_table_design(
         while True:
             try:
                 selection = input(
-                    "Enter the numbers of the table designs to keep (e.g., 1,2,3)\
+                    "Enter the numbers of the table designs to keep (e.g., 1,2,3) \n\
                     separated by commas: "
                 )
                 selected_indices = [
