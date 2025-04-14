@@ -1,3 +1,6 @@
+examples/ping/
+examples/r/
+examples/shiyuan/
 temp/
 # Byte-compiled / optimized / DLL files
 __pycache__/

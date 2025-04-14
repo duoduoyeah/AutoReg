@@ -1,3 +1,4 @@
+# This file may be deprecated
 # simulate VAR model
 # This file is first generate by LLM, then manually modified
 

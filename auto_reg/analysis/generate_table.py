@@ -12,9 +12,10 @@ from linearmodels.panel.results import PanelEffectsResults
 # Local imports
 from ..regression.regression_config import RegressionConfig
 from ..regression.panel_data import *
-from ..static.langchain_query import LangchainQueries
+from ..static import LangchainQueries
 from .models import RegressionAnalysis, RegressionResultTable, ResultTables, TableDesign
-
+from ..language_model import run_chain
+from ..errors import ChainConfigurationError
 
 async def draw_table(
     regression_description: str,
@@ -28,40 +29,43 @@ async def draw_table(
     """
     Draw a table for the regression results.
     """
-    for attempt in range(max_try_times):
+    try:
+        # setup prompt
+        parser = JsonOutputParser(pydantic_object=RegressionResultTable)
+
+        query = LangchainQueries.format_query(
+            query,
+            regression_config=str(regression_config),
+            regression_description=regression_description,
+            regression_result=str(regression_results),
+            latex_table_template=table_template,
+            number_of_results=len(regression_results),
+        )
+
+        prompt = PromptTemplate(
+            template="Answer the user query.\n{format_instructions}\n{query}\n",
+            input_variables=["query"],
+            partial_variables={
+                "format_instructions": parser.get_format_instructions()
+            },
+        )
+
+        chain = prompt | model | parser
+    except Exception:
+        raise ChainConfigurationError(extra_info={"error place": "draw_table"})
+    
+    for _ in range(max_try_times):
         try:
-            # setup prompt
-            parser = JsonOutputParser(pydantic_object=RegressionResultTable)
-
-            query = LangchainQueries.format_query(
-                query,
-                regression_config=str(regression_config),
-                regression_description=regression_description,
-                regression_result=str(regression_results),
-                latex_table_template=table_template,
-                number_of_results=len(regression_results),
-            )
-
-            prompt = PromptTemplate(
-                template="Answer the user query.\n{format_instructions}\n{query}\n",
-                input_variables=["query"],
-                partial_variables={
-                    "format_instructions": parser.get_format_instructions()
-                },
-            )
-
-            chain = prompt | model | parser
-
-            output = await chain.ainvoke({"query": query})
-
-            output = RegressionResultTable.model_validate(output)
-
+            output = await run_chain(
+                chain, 
+                query, 
+                RegressionResultTable, 
+                "draw_table",)
             return output
         except Exception as e:
-            print(
-                f"Error drawing table on attempt {attempt + 1}: {e}\n the tables is {regression_description}"
-            )
-
+            print(e)
+            continue
+    
     return RegressionResultTable(latex_table="")
 
 
@@ -120,10 +124,10 @@ async def draw_tables(
             table_descriptions.append(regression_description)
 
     results: list[RegressionResultTable] = await asyncio.gather(*table_tasks)
-    assert len(results) == len(table_descriptions)
-
     result_tables.tables = results
     result_tables.description = table_descriptions
+    result_tables.analysis = [RegressionAnalysis(latex_analysis="") for _ in range(len(results))]
+    result_tables.assert_valid()
 
 
 async def combine_table(
@@ -136,39 +140,45 @@ async def combine_table(
     """
     Combine multiple tables into one table.
     """
+    # one table doesn't need to be combined
     if len(combine_tables) == 1:
         return combine_tables[0]
 
-    for attempt in range(max_try_times):
+    try:
+        parser = JsonOutputParser(pydantic_object=RegressionResultTable)
+
+        query = LangchainQueries.format_query(
+            query,
+            table_title=table_title,
+            regression_tables="\n".join(
+                [table.latex_table for table in combine_tables]
+            ),
+        )
+
+        prompt = PromptTemplate(
+            template="Answer the user query.\n{format_instructions}\n{query}\n",
+            input_variables=["query"],
+            partial_variables={
+                "format_instructions": parser.get_format_instructions()
+            },
+        )
+
+        chain = prompt | model | parser
+
+    except Exception:
+        raise ChainConfigurationError(extra_info={"error place": "combine_table"})
+        
+    for _ in range(max_try_times):
         try:
-            # setup prompt
-            parser = JsonOutputParser(pydantic_object=RegressionResultTable)
-
-            query = LangchainQueries.format_query(
-                query,
-                table_title=table_title,
-                regression_tables="\n".join(
-                    [table.latex_table for table in combine_tables]
-                ),
-            )
-
-            prompt = PromptTemplate(
-                template="Answer the user query.\n{format_instructions}\n{query}\n",
-                input_variables=["query"],
-                partial_variables={
-                    "format_instructions": parser.get_format_instructions()
-                },
-            )
-
-            chain = prompt | model | parser
-
-            output = await chain.ainvoke({"query": query})
-            output = RegressionResultTable.model_validate(output)
+            output = await run_chain(
+                chain, 
+                query, 
+                RegressionResultTable, 
+                "draw_table",)
             return output
         except Exception as e:
-            print(
-                f"Error drawing table on attempt {attempt + 1}: {e}\n the tables is {table_title}"
-            )
+            print(e)
+            continue
 
     return RegressionResultTable(latex_table="")
 
@@ -192,16 +202,20 @@ async def combine_tables(
                 query=LangchainQueries.COMBINE_REGRESSION_TABLE_QUERY,
             )
         )
-        analysis.append(tables.get_analysis(design.table_index[i]))
+        analysis.append(tables.combine_analysis(design.table_index[i]))
 
     combined_tables: list[RegressionResultTable] = await asyncio.gather(*combine_tasks)
 
     assert len(combined_tables) == len(analysis)
     assert len(combined_tables) == design.number_of_tables
-
+    # delete later
+    if True:
+        print("combined_tables: ", combined_tables,"\n")
+        print("analysis: ", analysis,"\n")
+        print("design.table_title: ", design.table_title,"\n")
+        
     result_tables = ResultTables(
         tables=combined_tables,
-        index=None,
         description=design.table_title,
         analysis=analysis,
     )
@@ -224,6 +238,7 @@ async def analyze_regression_result(
     regression_table: str,
     model: ChatOpenAI,
     language_used: str = "Chinese",
+    max_try_times: int = 2,
 ) -> RegressionAnalysis:
     """
     Analyze regression results.
@@ -241,8 +256,7 @@ async def analyze_regression_result(
         RegressionAnalysis: The regression result analysis.
     """
     try:
-        # Leave the parameter empty, no need for langchain build-in validation
-        parser = JsonOutputParser()
+        parser = JsonOutputParser(pydantic_object=RegressionAnalysis)
 
         query = LangchainQueries.format_query(
             LangchainQueries.ANALYSIS_QUERY,
@@ -255,27 +269,38 @@ async def analyze_regression_result(
         prompt = PromptTemplate(
             template="Answer the user query.\n{format_instructions}\n{query}\n",
             input_variables=["query"],
-            partial_variables={"format_instructions": parser.get_format_instructions()},
+            partial_variables={
+                "format_instructions": parser.get_format_instructions()},
         )
 
         chain = prompt | model | parser
 
-        output = await chain.ainvoke({"query": query})
-
-        output = RegressionAnalysis.model_validate(output)
-
-        return output
     except Exception as e:
-        print(f"Error analyzing regression result: {e}")
+        raise ChainConfigurationError(extra_info={
+            "error place": "analyze_regression_result",
+            "error": e,
+            })
 
-    return RegressionAnalysis(analysis="")
+    for _ in range(max_try_times): 
+        try:
+            output = await run_chain(
+                chain, 
+                query, 
+                RegressionAnalysis, 
+                "draw_table",)
+            return output
+        except Exception as e:
+            print(e)
+            continue
+
+    return RegressionAnalysis(latex_analysis="")
 
 
 async def generate_empty_analysis() -> RegressionAnalysis:
     """
     Generate an empty analysis.
     """
-    return RegressionAnalysis(analysis="")
+    return RegressionAnalysis(latex_analysis="")
 
 
 async def analyze_regression_results(

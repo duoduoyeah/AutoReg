@@ -16,9 +16,20 @@ setup(
         "pandas",
         "langchain",
         "langchain-openai",
-        "langsmith",
         "openai",
+        "pylatex",
+        "pandoc",
     ],
+    extras_require={
+        "dev": [
+            "pytest",
+            "langsmith",
+            "flake8",
+        ],
+        "format": [
+            "black",
+        ],
+    },
     author="Shiyuan Li",
     author_email="lizhicuo2020@gmail.com",
     description="Tools for automatic regression, table generation, and analysis.",

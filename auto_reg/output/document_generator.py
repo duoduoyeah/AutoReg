@@ -1,0 +1,91 @@
+from ..analysis.models import ResultTables
+import pandoc
+from ..errors import OutputFileError
+from .tex_convertor import convert_to_latex
+from pylatex import Document, Section, Subsection, NoEscape, Package
+
+def fill_document(doc, tables, with_analysis):
+    """Add a section, a subsection and some text to the document.
+
+    :param doc: the document
+    :type doc: :class:`pylatex.document.Document` instance
+    """
+    with doc.create(Section("Regression Analysis Part")):
+        for table, description, analysis in tables.iterate_table():
+            with doc.create(Subsection(description)):
+                if with_analysis:
+                    doc.append(NoEscape(convert_to_latex(analysis.latex_analysis)))
+                doc.append(NoEscape(table.latex_table))
+
+def create_tex(
+    tables: ResultTables,
+    with_analysis: bool = True,
+):
+    try:
+        doc = Document(documentclass="ctexart")
+        doc.packages.append(Package('booktabs')) 
+        doc.packages.append(Package('threeparttable')) 
+        fill_document(
+            doc,
+            tables,
+            with_analysis,
+        )
+        
+        return doc
+    except Exception as e:
+        raise OutputFileError(extra_info={"extra_info": str(e)})
+    
+def generate_tex(
+    doc,
+    filepath: str,
+):
+    if filepath.endswith(".tex"):
+        filepath = filepath.replace(".tex", "")
+
+    try:
+        doc.generate_tex(filepath)
+    except Exception as e:
+        raise OutputFileError(
+            extra_info={
+                "error": "The tex file failed to generate",
+                "extra_info": str(e),
+            })
+
+def generate_pdf(
+    doc, 
+    filepath: str,
+):
+    # removethe .pdf extension
+    if filepath.endswith(".pdf"):
+        filepath = filepath.replace(".pdf", "")
+    try:
+        doc.generate_pdf(filepath, clean_tex=True, compiler="xelatex")
+    except Exception as e:
+        raise OutputFileError(
+            extra_info={
+                "error": "The PDF file failed to generate",
+                "extra_info": str(e),
+            })
+
+
+def generate_word(
+    latex_file: str,
+    filepath: str,
+):
+    assert isinstance(filepath, str)
+    assert latex_file.endswith(".tex")
+    doc = pandoc.read(file=latex_file, format="latex")
+    # add the .docx extension
+    if not filepath.endswith(".docx"):
+        filepath = filepath + ".docx"
+
+    try:
+        doc_word = pandoc.write(doc, format="docx")
+        with open(filepath, "wb") as f:
+            f.write(doc_word)
+    except Exception as e:
+        raise OutputFileError(
+            extra_info={
+                "error": "The Word file failed to generate",
+                "extra_info": str(e),
+            })
